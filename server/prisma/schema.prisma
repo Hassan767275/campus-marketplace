@@ -42,6 +42,17 @@ enum ListingStatus {
   REMOVED
 }
 
+enum ListingCategory {
+  TEXTBOOKS
+  ELECTRONICS
+  FURNITURE
+  CLOTHING
+  KITCHEN
+  SPORTS
+  TICKETS
+  OTHER
+}
+
 enum LedgerAccount {
   escrow_held
   buyer_funds
@@ -113,16 +124,17 @@ model User {
 }
 
 model Listing {
-  id          String        @id @default(uuid()) @db.Uuid
-  sellerId    String        @map("seller_id") @db.Uuid
+  id          String          @id @default(uuid()) @db.Uuid
+  sellerId    String          @map("seller_id") @db.Uuid
   title       String
   description String
-  priceCents  Int           @map("price_cents")
-  currency    String        @default("USD") @db.Char(3)
-  photoUrls   String[]      @map("photo_urls")
-  status      ListingStatus @default(ACTIVE)
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  category    ListingCategory
+  priceCents  Int             @map("price_cents")
+  currency    String          @default("USD") @db.Char(3)
+  photoUrls   String[]        @map("photo_urls")
+  status      ListingStatus   @default(ACTIVE)
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   seller    User          @relation(fields: [sellerId], references: [id])
   orders    Order[]
@@ -130,6 +142,7 @@ model Listing {
   decisions Decision[]
 
   @@index([status, createdAt])
+  @@index([category, status])
   @@index([sellerId])
   @@map("listings")
 }

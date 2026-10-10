@@ -1,0 +1,333 @@
+// Source of truth for the database schema. See CLAUDE.md.
+// Connection URL (DATABASE_URL) is set in prisma.config.ts (CLI/migrations)
+// and src/db.ts (runtime).
+//
+// Conventions:
+// - All money is integer cents (Int). Never floats/decimals.
+// - Tables and columns are snake_case in Postgres so raw SQL reads naturally.
+// - ledger_entries is append-only; sum-to-zero and no-UPDATE/DELETE are
+//   enforced by SQL added to the migration (Prisma can't express them).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Enums ----------
+
+enum OrderState {
+  CREATED
+  BLOCKED
+  AUTHORIZED
+  VOIDED
+  IN_DISPUTE
+  REFUNDED
+  PARTIAL_REFUND
+  RELEASED
+  ESCALATED
+  CAPTURED
+  PAYOUT_PENDING
+  PAID_OUT
+  PAYOUT_RETRY
+}
+
+enum ListingStatus {
+  ACTIVE
+  RESERVED
+  SOLD
+  REMOVED
+}
+
+enum LedgerAccount {
+  escrow_held
+  buyer_funds
+  seller_payable
+  platform_fees
+  paid_out
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  DONE
+  DEAD
+}
+
+enum DecisionKind {
+  RISK
+  DISPUTE
+}
+
+enum RiskLevel {
+  low
+  medium
+  high
+}
+
+enum DecisionOutcome {
+  // risk engine
+  NORMAL
+  HOLD_WITH_WARNING
+  BLOCKED
+  // dispute agent
+  REFUND
+  PARTIAL_REFUND
+  RELEASE
+  ESCALATE
+}
+
+enum DisputeStatus {
+  OPEN
+  PENDING_APPROVAL
+  RESOLVED
+  ESCALATED
+}
+
+// ---------- Tables ----------
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique // school email only, enforced in app
+  displayName     String    @map("display_name")
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(3)
+  paypalEmail     String?   @map("paypal_email") // payout receiver
+  isAdmin         Boolean   @default(false) @map("is_admin")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  listings         Listing[]
+  buyerOrders      Order[]       @relation("OrderBuyer")
+  sellerOrders     Order[]       @relation("OrderSeller")
+  sentMessages     ChatMessage[] @relation("MessageSender")
+  receivedMessages ChatMessage[] @relation("MessageRecipient")
+  qrTokensIssued   QrToken[]     @relation("QrSeller")
+  qrTokensRedeemed QrToken[]     @relation("QrRedeemer")
+  disputesOpened   Dispute[]
+  approvals        Decision[]
+
+  @@map("users")
+}
+
+model Listing {
+  id          String        @id @default(uuid()) @db.Uuid
+  sellerId    String        @map("seller_id") @db.Uuid
+  title       String
+  description String
+  priceCents  Int           @map("price_cents")
+  currency    String        @default("USD") @db.Char(3)
+  photoUrls   String[]      @map("photo_urls")
+  status      ListingStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  seller    User          @relation(fields: [sellerId], references: [id])
+  orders    Order[]
+  messages  ChatMessage[]
+  decisions Decision[]
+
+  @@index([status, createdAt])
+  @@index([sellerId])
+  @@map("listings")
+}
+
+model Order {
+  id               String     @id @default(uuid()) @db.Uuid
+  listingId        String     @map("listing_id") @db.Uuid
+  buyerId          String     @map("buyer_id") @db.Uuid
+  sellerId         String     @map("seller_id") @db.Uuid
+  state            OrderState @default(CREATED)
+  version          Int        @default(0) // optimistic concurrency, bumped by transition()
+  amountCents      Int        @map("amount_cents")
+  platformFeeCents Int        @map("platform_fee_cents")
+  currency         String     @default("USD") @db.Char(3)
+
+  paypalOrderId         String? @unique @map("paypal_order_id")
+  paypalAuthorizationId String? @unique @map("paypal_authorization_id")
+  paypalCaptureId       String? @unique @map("paypal_capture_id")
+  paypalPayoutBatchId   String? @map("paypal_payout_batch_id")
+  paypalPayoutItemId    String? @map("paypal_payout_item_id")
+
+  authorizedAt           DateTime? @map("authorized_at") @db.Timestamptz(3)
+  authorizationExpiresAt DateTime? @map("authorization_expires_at") @db.Timestamptz(3)
+  handoffDeadline        DateTime? @map("handoff_deadline") @db.Timestamptz(3) // authorizedAt + 72h
+  capturedAt             DateTime? @map("captured_at") @db.Timestamptz(3)
+  paidOutAt              DateTime? @map("paid_out_at") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  listing       Listing       @relation(fields: [listingId], references: [id])
+  buyer         User          @relation("OrderBuyer", fields: [buyerId], references: [id])
+  seller        User          @relation("OrderSeller", fields: [sellerId], references: [id])
+  ledgerEntries LedgerEntry[]
+  outbox        OutboxEvent[]
+  decisions     Decision[]
+  qrTokens      QrToken[]
+  messages      ChatMessage[]
+  dispute       Dispute?
+
+  @@index([state, handoffDeadline]) // void sweeper
+  @@index([state, authorizationExpiresAt]) // reauthorize sweeper
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([listingId])
+  @@map("orders")
+}
+
+// Append-only. Entries sharing a transactionId must sum to zero.
+// Sign convention: + debit, - credit (see CLAUDE.md ledger example).
+model LedgerEntry {
+  id            BigInt        @id @default(autoincrement())
+  transactionId String        @map("transaction_id") @db.Uuid
+  orderId       String?       @map("order_id") @db.Uuid
+  account       LedgerAccount
+  amountCents   Int           @map("amount_cents")
+  kind          String // AUTHORIZE, CAPTURE, VOID, REFUND, PAYOUT, ...
+  paypalRef     String?       @map("paypal_ref") // PayPal txn/capture/payout id
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  order Order? @relation(fields: [orderId], references: [id])
+
+  @@index([transactionId])
+  @@index([orderId])
+  @@index([account])
+  @@map("ledger_entries")
+}
+
+model WebhookEvent {
+  id           String    @id @default(uuid()) @db.Uuid
+  eventId      String    @unique @map("event_id") // PayPal event id; INSERT ... ON CONFLICT DO NOTHING
+  eventType    String    @map("event_type")
+  resourceId   String?   @map("resource_id")
+  payload      Json      @db.JsonB
+  receivedAt   DateTime  @default(now()) @map("received_at") @db.Timestamptz(3)
+  processedAt  DateTime? @map("processed_at") @db.Timestamptz(3)
+  processError String?   @map("process_error") // includes "stale, dropped" notes
+
+  @@index([eventType])
+  @@index([resourceId])
+  @@map("webhook_events")
+}
+
+// Transactional outbox. Worker claims rows with FOR UPDATE SKIP LOCKED.
+model OutboxEvent {
+  id            String       @id @default(uuid()) @db.Uuid
+  orderId       String?      @map("order_id") @db.Uuid
+  topic         String // e.g. paypal.capture, paypal.void, paypal.payout
+  payload       Json         @db.JsonB
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0) // DEAD after 5
+  nextAttemptAt DateTime     @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  lastError     String?      @map("last_error")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  processedAt   DateTime?    @map("processed_at") @db.Timestamptz(3)
+
+  order Order? @relation(fields: [orderId], references: [id])
+
+  @@index([status, nextAttemptAt])
+  @@index([orderId])
+  @@map("outbox")
+}
+
+// One row per AI-assisted decision (risk engine or dispute agent).
+model Decision {
+  id        String          @id @default(uuid()) @db.Uuid
+  kind      DecisionKind
+  orderId   String?         @map("order_id") @db.Uuid
+  listingId String?         @map("listing_id") @db.Uuid
+  disputeId String?         @map("dispute_id") @db.Uuid
+  risk      RiskLevel? // final level after policy floor
+  outcome   DecisionOutcome
+
+  inputs    Json    @db.JsonB // deterministic features / tool reads given to the LLM
+  llmOutput Json?   @map("llm_output") @db.JsonB // raw structured LLM response
+  reasons   Json?   @db.JsonB
+  signals   Json?   @db.JsonB
+  evidence  Json?   @db.JsonB
+  reasoning String?
+  model     String?
+
+  amountCents         Int?      @map("amount_cents") // refund amount, capped at amount paid
+  approverId          String?   @map("approver_id") @db.Uuid
+  approvedAt          DateTime? @map("approved_at") @db.Timestamptz(3)
+  paypalTransactionId String?   @map("paypal_transaction_id")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  order    Order?   @relation(fields: [orderId], references: [id])
+  listing  Listing? @relation(fields: [listingId], references: [id])
+  dispute  Dispute? @relation(fields: [disputeId], references: [id])
+  approver User?    @relation(fields: [approverId], references: [id])
+
+  @@index([orderId])
+  @@index([listingId])
+  @@index([disputeId])
+  @@index([kind, createdAt])
+  @@map("decisions")
+}
+
+// Signed QR payload is bound to orderId + sellerId + nonce, 5-min expiry.
+// Redemption fields double as the scan log used as dispute evidence.
+model QrToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  orderId   String    @map("order_id") @db.Uuid
+  sellerId  String    @map("seller_id") @db.Uuid
+  nonce     String    @unique
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  usedById  String?   @map("used_by_id") @db.Uuid
+  scanMeta  Json?     @map("scan_meta") @db.JsonB // ip, user agent, etc.
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  order  Order @relation(fields: [orderId], references: [id])
+  seller User  @relation("QrSeller", fields: [sellerId], references: [id])
+  usedBy User? @relation("QrRedeemer", fields: [usedById], references: [id])
+
+  @@index([orderId])
+  @@map("qr_tokens")
+}
+
+// Untrusted input (prompt injection risk) — never let it unlock money.
+model ChatMessage {
+  id          String   @id @default(uuid()) @db.Uuid
+  listingId   String   @map("listing_id") @db.Uuid
+  orderId     String?  @map("order_id") @db.Uuid
+  senderId    String   @map("sender_id") @db.Uuid
+  recipientId String   @map("recipient_id") @db.Uuid
+  body        String
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  listing   Listing @relation(fields: [listingId], references: [id])
+  order     Order?  @relation(fields: [orderId], references: [id])
+  sender    User    @relation("MessageSender", fields: [senderId], references: [id])
+  recipient User    @relation("MessageRecipient", fields: [recipientId], references: [id])
+
+  @@index([listingId, createdAt])
+  @@index([orderId])
+  @@index([senderId, recipientId])
+  @@map("chat_messages")
+}
+
+model Dispute {
+  id          String        @id @default(uuid()) @db.Uuid
+  orderId     String        @unique @map("order_id") @db.Uuid
+  openedById  String        @map("opened_by_id") @db.Uuid
+  reason      String
+  description String?
+  photoUrls   String[]      @map("photo_urls")
+  status      DisputeStatus @default(OPEN)
+  resolution  OrderState? // REFUNDED | PARTIAL_REFUND | RELEASED | ESCALATED
+  refundCents Int?          @map("refund_cents")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  resolvedAt  DateTime?     @map("resolved_at") @db.Timestamptz(3)
+
+  order     Order      @relation(fields: [orderId], references: [id])
+  openedBy  User       @relation(fields: [openedById], references: [id])
+  decisions Decision[]
+
+  @@index([status])
+  @@map("disputes")
+}

@@ -29,6 +29,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+CLAUDE.md
+TASKS.md
 
 # local env files
 .env*.local
@@ -41,3 +43,6 @@ yarn-error.log*
 next-env.d.ts
 
 # End of https://www.toptal.com/developers/gitignore/api/nextjs
+
+# Prisma generated client
+server/src/generated

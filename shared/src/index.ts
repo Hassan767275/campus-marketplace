@@ -3,3 +3,5 @@
 
 /** Money is always integer cents (see CLAUDE.md). */
 export type Cents = number;
+
+export * from "./orderState.js";

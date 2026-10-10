@@ -1,0 +1,192 @@
+# Campus Marketplace — Task Tracker
+
+Deadline: **Nov 12, 2026** (submit by Nov 11 for a buffer day). See CLAUDE.md for architecture and rules.
+
+## How to use this file
+- Paste **one task at a time** into Claude Code (copy the prompt under the task).
+- When Claude finishes a task, it ticks the box (`- [x]`) in this file. You review the diff and commit.
+- A phase is done only when its **Done when** check passes on the **deployed** app.
+- Don't start the next phase's tasks early (reading docs is fine).
+- Tasks aren't assigned. Before starting one, tell your teammate so you don't both grab it.
+- Fallback if behind by Nov 7: cut the dispute agent's escalation path and the reconciliation job first.
+
+---
+
+## Phase 0 — Setup & foundations (Oct 7–11)
+Goal: both of you can run the app locally, it deploys, and it talks to the DB and PayPal sandbox.
+
+- [x] **0.1 Create Postgres DB** (Supabase, done manually)
+
+- [x] **0.2 Fill in the monorepo**
+  > Read CLAUDE.md. The repo already has client/ (React + Vite) and server/ (Express + Prisma). Add worker/ (TypeScript, empty entry point for now) and a shared/ TypeScript package that client, server and worker can all import. Make sure the root .gitignore ignores every .env file but does NOT ignore CLAUDE.md or TASKS.md. Add a .env.example to each app listing the variables it needs (no real values). When done, tick task 0.2 in TASKS.md.
+
+- [x] **0.3 Prisma schema + migration** (init migration applied to Supabase)
+  > Read CLAUDE.md. Set up Prisma in server/ with Postgres, using DATABASE_URL from server/.env. Create the full schema for every table in CLAUDE.md: integer cents for all money fields, JSONB where CLAUDE.md says, a version column on orders, and a unique constraint on webhook_events.event_id. Show me the schema before running any migration. After the migration runs, tick task 0.3 in TASKS.md.
+
+- [x] **0.4 Ledger DB safety** (included in the 0.3 init migration: sum-to-zero + append-only triggers. Tests in server/test/ledger.test.ts pass.)
+
+- [ ] **0.5 Seed script**
+  > Read CLAUDE.md. Write a Prisma seed script in server/: 5 test users with school email addresses and 20 listings spread across several categories with realistic prices in integer cents. Make it safe to re-run. When done, tick task 0.5 in TASKS.md.
+
+- [ ] **0.6 State enum + legal transitions**
+  > Read CLAUDE.md. In the shared types package, write the order state enum and a legal-transitions table as code, exactly matching the state machine in CLAUDE.md. Add a helper isLegalTransition(from, to). No database logic yet. When done, tick task 0.6 in TASKS.md.
+
+- [ ] **0.7 PayPal sandbox keys + token test** (create sandbox buyer/seller accounts and a REST app on developer.paypal.com manually first, put keys in server/.env)
+  > Read CLAUDE.md. Add PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET and PAYPAL_BASE_URL (sandbox) to server/.env.example. Write a small script in server/ that gets a PayPal sandbox OAuth access token using those env vars and prints success or the error. Never log the secret. When done, tick task 0.7 in TASKS.md.
+
+- [ ] **0.8 Deploy skeleton**
+  > Read CLAUDE.md. Add a GET /health endpoint and a GET /listings endpoint (returns seeded listings from Postgres) to the API. Prepare the API for deployment on Render or Railway and the web app for Vercel: build scripts, start scripts, and a short DEPLOY.md listing the env vars each host needs. Don't deploy for me. When done, tick task 0.8 in TASKS.md.
+
+- [ ] **0.9 Branch rules** (manual): feature branches, PRs reviewed by the other person, main always deploys. Read PayPal docs on Orders v2 (authorize intent), Payouts, webhooks, and note the authorization honor and expiry windows in CLAUDE.md.
+
+**Done when:** the deployed API returns seeded listings from Postgres, and the token script gets a PayPal sandbox access token.
+
+---
+
+## Phase 1 — Core marketplace (Oct 12–18)
+Goal: a student can sign up, post an item, browse, and message a seller. No money yet.
+
+- [ ] **1.1 Auth API**
+  > Read CLAUDE.md. Build the auth API: sign up restricted to school email domains (configurable list in env), email verification (a fake link logged to the console is fine in dev), login with JWT or sessions, and auth middleware for protected routes. When done, tick task 1.1 in TASKS.md.
+
+- [ ] **1.2 Listings API**
+  > Read CLAUDE.md. Build the listings API: create, edit, mark sold, list with filters (category, price range), and get one. Only the seller can edit or mark sold. Add photo upload to Supabase Storage. When done, tick task 1.2 in TASKS.md.
+
+- [ ] **1.3 Chat API**
+  > Read CLAUDE.md. Build the chat API: messages between buyer and seller per listing, stored in chat_messages, with an endpoint to send and an endpoint to fetch messages (polling is fine). Only the two participants can read a thread. When done, tick task 1.3 in TASKS.md.
+
+- [ ] **1.4 API tests**
+  > Read CLAUDE.md. Write API tests for auth and listings: sign up with a non-school email fails, login works, unauthenticated requests are rejected, filters work, and a non-owner can't edit a listing. When done, tick task 1.4 in TASKS.md.
+
+- [ ] **1.5 Shared layout and design**
+  > Read CLAUDE.md. In client/, set up a shared layout (header, nav, page container), a small set of reusable components (button, input, card), and routing, so later pages look consistent. When done, tick task 1.5 in TASKS.md.
+
+- [ ] **1.6 Auth UI**
+  > Read CLAUDE.md. Build the sign up and login pages in client/ against the auth API, and add protected routes that redirect to login. When done, tick task 1.6 in TASKS.md.
+
+- [ ] **1.7 Browse, listing detail, post listing**
+  > Read CLAUDE.md. Build in client/: a browse grid with category and price filters, a listing detail page, and a post-a-listing form with photo upload. When done, tick task 1.7 in TASKS.md.
+
+- [ ] **1.8 Chat panel + My listings / My orders**
+  > Read CLAUDE.md. Add a chat panel on the listing detail page (polling the chat API) and a "My listings / My orders" page (orders list empty for now). When done, tick task 1.8 in TASKS.md.
+
+**Done when:** on the deployed app, user A posts an item with a photo, user B finds it with a filter, and they exchange chat messages.
+
+---
+
+## Phase 2 — Payments core (Oct 19–25)
+Goal: buyer pays, money is held, QR scan at handoff captures it, and the ledger shows every movement.
+
+- [ ] **2.1 Order state machine service**
+  > Read CLAUDE.md. Build the order state machine service with one transition(orderId, from, to, expectedVersion) function that uses the legal-transitions table, rejects illegal moves, and uses optimistic concurrency (zero rows updated means a stale version, which is rejected). It must accept a Prisma transaction client so callers can combine it with other writes. When done, tick task 2.1 in TASKS.md.
+
+- [ ] **2.2 Double-entry ledger**
+  > Read CLAUDE.md. Build postTransaction(entries[]) for the double-entry ledger: integer cents only, refuses any transaction that doesn't sum to zero, append-only, and accepts a Prisma transaction client. When done, tick task 2.2 in TASKS.md.
+
+- [ ] **2.3 PayPal client (server only)**
+  > Read CLAUDE.md. Build a server-only PayPal client in server/ with: create order (intent AUTHORIZE), authorize, capture, and void. Every call sends a PayPal-Request-Id built from order ID + action. Handle errors and timeouts clearly. When done, tick task 2.3 in TASKS.md.
+
+- [ ] **2.4 Checkout flow**
+  > Read CLAUDE.md. Build checkout: PayPal Buttons in client/, buyer approves, API authorizes, and in one DB transaction the order moves to AUTHORIZED with a 72-hour deadline and the ledger posts escrow_held / buyer_funds. When done, tick task 2.4 in TASKS.md.
+
+- [ ] **2.5 QR handoff + capture**
+  > Read CLAUDE.md. Build the QR handoff: the seller's page shows a signed token (order ID, seller ID, single-use nonce, 5-minute expiry). The buyer scans it on a logged-in scanner page. The server verifies signature, nonce unused, not expired, and buyer is the order's buyer, marks the nonce used, captures through PayPal, and in one DB transaction moves the order to CAPTURED and posts escrow_held / seller_payable / platform_fees. Log every scan. When done, tick task 2.5 in TASKS.md.
+
+- [ ] **2.6 Order status page**
+  > Read CLAUDE.md. Build an order status page in client/ for buyer and seller showing current state, the handoff deadline countdown, and the right action (show QR for seller, scan for buyer). When done, tick task 2.6 in TASKS.md.
+
+- [ ] **2.7 Unit tests**
+  > Read CLAUDE.md. Write unit tests: every illegal transition is rejected, two concurrent updates with the same version result in exactly one winner, every ledger transaction sums to zero, and an unbalanced transaction is refused. When done, tick task 2.7 in TASKS.md.
+
+- [ ] **2.8 End-to-end sandbox run** (manual, together): full purchase in sandbox, then try a replayed QR token and a double-clicked capture.
+
+**Done when:** a sandbox purchase goes CREATED → AUTHORIZED → CAPTURED via QR scan, the ledger balances, a replayed QR fails, and a retried capture does not double-charge.
+
+---
+
+## Phase 3 — Reliability (Oct 26–Nov 1)
+Goal: webhooks, deadlines, payouts and retries all run without anyone clicking anything.
+
+- [ ] **3.1 Worker + deadline job**
+  > Read CLAUDE.md. Set up pg-boss in worker/. Add a deadline job that finds AUTHORIZED orders past their 72-hour deadline, voids them through PayPal, moves them to VOIDED via the state machine, and notifies both sides (a notification record is fine). When done, tick task 3.1 in TASKS.md.
+
+- [ ] **3.2 Transactional outbox**
+  > Read CLAUDE.md. Implement the transactional outbox: state changes write an outbox row in the same transaction. The worker reads with FOR UPDATE SKIP LOCKED, sends the side effect, retries with exponential backoff, and moves it to a dead-letter status after 5 failures. When done, tick task 3.2 in TASKS.md.
+
+- [ ] **3.3 Webhook ingestor**
+  > Read CLAUDE.md. Build the PayPal webhook endpoint: verify the signature using PayPal's verification endpoint, insert into webhook_events with ON CONFLICT DO NOTHING on event_id, queue for processing, and log and drop stale events. When done, tick task 3.3 in TASKS.md.
+
+- [ ] **3.4 Webhook event handlers**
+  > Read CLAUDE.md. Handle these webhook events through the state machine: authorization voided, capture completed, capture refunded, payout item status, and dispute created. Check PayPal's docs for exact event names. When done, tick task 3.4 in TASKS.md.
+
+- [ ] **3.5 Payouts**
+  > Read CLAUDE.md. After capture, send the seller payout through PayPal Payouts (amount minus platform fee): CAPTURED → PAYOUT_PENDING → PAID_OUT, with failure → PAYOUT_RETRY retried by the worker. Post seller_payable / paid_out to the ledger when paid. When done, tick task 3.5 in TASKS.md.
+
+- [ ] **3.6 Reauthorize-or-void**
+  > Read CLAUDE.md. Add a worker job for authorizations nearing PayPal's expiry window: reauthorize if the handoff is still pending, otherwise void and notify both sides. When done, tick task 3.6 in TASKS.md.
+
+- [ ] **3.7 Reconciliation job** (cut first if behind)
+  > Read CLAUDE.md. Add a worker job that every few minutes compares ledger totals per order with PayPal's records and saves any mismatch as a flagged record. When done, tick task 3.7 in TASKS.md.
+
+- [ ] **3.8 AG Grid admin dashboard**
+  > Read CLAUDE.md. Build an admin dashboard in client/ with AG Grid: orders by state, money held vs captured vs paid out (computed from the ledger), flagged reconciliation mismatches, and dead-letter outbox items. Admin-only route. When done, tick task 3.8 in TASKS.md.
+
+**Done when:** every failure scenario (capture timeout, duplicate webhook, QR scan + deadline race, payout failure, chat injection, authorization near expiry, ledger/PayPal mismatch) can be triggered on purpose and shows the right result on the dashboard.
+
+---
+
+## Phase 4 — AI risk engine and dispute agent (Nov 2–7)
+Goal: every order gets a risk decision before payment, and complaints are resolved by an agent that proposes and a human approves.
+
+- [ ] **4.1 Risk features**
+  > Read CLAUDE.md. Build deterministic risk features for an order: seller account age, listings posted in the last 24 hours, price vs category median, past disputes, and off-platform payment phrases in chat (e-transfer, cash app, etc.). When done, tick task 4.1 in TASKS.md.
+
+- [ ] **4.2 LLM risk classifier**
+  > Read CLAUDE.md. Build the LLM risk classifier: inputs are the listing, features and chat, output is JSON-schema validated { risk: low|medium|high, reasons, signals }. Listing and chat text are passed as clearly delimited untrusted data. Invalid output falls back to medium. When done, tick task 4.2 in TASKS.md.
+
+- [ ] **4.3 Policy layer**
+  > Read CLAUDE.md. Build the risk policy layer: hard rules act as a floor (e.g. off-platform payment phrases mean at least medium), combined with the LLM result, mapped to normal / longer hold with warning / BLOCKED. Run it before checkout and save every decision to the decisions table. When done, tick task 4.3 in TASKS.md.
+
+- [ ] **4.4 Risk evals**
+  > Read CLAUDE.md. Create an eval set of 40 labeled listings and chats (scam and legit, including prompt-injection attempts) and a script that runs the full risk pipeline and prints precision and recall. When done, tick task 4.4 in TASKS.md.
+
+- [ ] **4.5 Report a problem flow**
+  > Read CLAUDE.md. Build "Report a problem": the buyer opens a dispute on an order, adds text and photos, and the order moves to IN_DISPUTE through the state machine. When done, tick task 4.5 in TASKS.md.
+
+- [ ] **4.6 Dispute agent read tools**
+  > Read CLAUDE.md. Build the dispute agent's read tools: get order, chat history, photos, QR scan log, and ledger entries for a disputed order. When done, tick task 4.6 in TASKS.md.
+
+- [ ] **4.7 Dispute agent action tools + approval gate**
+  > Read CLAUDE.md. Build the dispute agent's action tools (full refund, partial refund, release to seller, escalate) via the PayPal Agent Toolkit or REST. Refunds are capped at the amount paid. Actions above a set amount need admin approval in the dashboard. Save every decision with evidence, reasoning, proposed action, approver and PayPal transaction ID. Escalation to a PayPal dispute is optional (cut first if behind). When done, tick task 4.7 in TASKS.md.
+
+- [ ] **4.8 AI decisions in dashboard**
+  > Read CLAUDE.md. Show risk decisions and dispute agent decision records in the admin dashboard, including the approval queue. When done, tick task 4.8 in TASKS.md.
+
+**Done when:** a scam-looking listing is blocked, an injection attempt in chat fails, the eval script prints numbers, and a demo dispute ends in an approved partial refund with a matching ledger entry.
+
+---
+
+## Phase 5 — Polish, demo and submission (Nov 8–12)
+Goal: a judge understands the project in 3 minutes and can try it themselves.
+
+- [ ] **5.1 Chaos buttons**
+  > Read CLAUDE.md. Add admin "chaos" buttons in the dashboard to trigger failure scenarios live: duplicate webhook, capture timeout, expired deadline. Sandbox only. When done, tick task 5.1 in TASKS.md.
+
+- [ ] **5.2 UI polish**
+  > Read CLAUDE.md. Do a UI polish pass in client/: loading and error states on every page, and a mobile-friendly layout for the QR scanner page. When done, tick task 5.2 in TASKS.md.
+
+- [ ] **5.3 Demo seed data**
+  > Read CLAUDE.md. Write a demo seed script with one normal completed sale, one blocked scam listing, and one open dispute. When done, tick task 5.3 in TASKS.md.
+
+- [ ] **5.4 Architecture diagram + payment tradeoff**
+  > Read CLAUDE.md. Write docs/ARCHITECTURE.md with a Mermaid architecture diagram and a short section on the payment-model tradeoff (authorize-then-capture vs capture-and-hold, including the regulatory note about holding other people's money). When done, tick task 5.4 in TASKS.md.
+
+- [ ] **5.5 README**
+  > Read CLAUDE.md. Write the README: what the project is, setup steps, env vars (names only), how to use sandbox test accounts, and how to run evals. No real credentials. When done, tick task 5.5 in TASKS.md.
+
+- [ ] **5.6 Demo video** (manual)
+- [ ] **5.7 Devpost page** (together): problem, how escrow works, AI safety design, eval results, failure handling
+- [ ] **5.8 Full dry run** (manual, together): deployed app from a fresh browser
+- [ ] **5.9 Submit** 🚀
+
+**Done when:** Devpost shows submitted, the video is public, and the deployed demo works with the test accounts in the README.

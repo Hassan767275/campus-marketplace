@@ -6,8 +6,9 @@
   "scripts": {
     "test": "vitest run",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/index.js",
+    "migrate:deploy": "prisma migrate deploy",
     "paypal:token": "tsx scripts/paypal-token.ts",
     "seed": "tsx prisma/seed.ts"
   },

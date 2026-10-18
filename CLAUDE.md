@@ -20,7 +20,32 @@ Authorize, then capture (`intent: AUTHORIZE`). Buyer funds are held, not taken.
 - QR scan at handoff → capture
 - No handoff within 72 hours → void (buyer never charged)
 - After capture → seller payout via Payouts, platform fee kept back
-- Authorizations have a short honor period and an expiry window; check PayPal docs for exact numbers. Worker reauthorizes or voids near expiry.
+- Authorizations have a 3-day honor period and expire after 29 days (details below). Worker reauthorizes or voids near expiry.
+
+## PayPal limits (from PayPal docs, checked Oct 17, 2026)
+**Authorizations (Orders v2, `intent: AUTHORIZE`)**
+- Honor period: **3 days** after authorizing. PayPal recommends capturing inside it; a capture after it can fail if the buyer's funds are no longer available.
+- Authorization is valid for **29 days**. After the honor period you can reauthorize (several times, within the 29 days).
+- Each reauthorization returns a **new authorization ID** and restarts the 3-day honor period. Save the new ID to `orders.paypal_authorization_id` and capture against it. Reauthorizing late shortens the honor period (e.g. day 27 → only 2 days left).
+- PayPal voids the authorization itself when it expires and sends `PAYMENT.AUTHORIZATION.VOIDED`.
+- Our 72-hour handoff deadline equals the honor period, so the normal flow never needs a reauthorization. Orders that outlive it (e.g. sitting in IN_DISPUTE) must be reauthorized before capture and resolved before day 29.
+- Capture can exceed the authorized amount (up to 115% or +$75 USD, whichever is less). We never capture more than the authorized amount.
+
+**Payouts**
+- `sender_batch_id` must be unique for 30 days; a repeat is rejected and PayPal pays only once. Derive it from the order ID (e.g. `payout-<orderId>`) so retries are safe. After a 5xx, retry with the same `sender_batch_id`.
+- One item per batch for us (limit is 15,000).
+- Item statuses: PENDING, SUCCESS, UNCLAIMED, ON_HOLD, FAILED, BLOCKED, DENIED, RETURNED, REFUNDED. Our mapping: only SUCCESS → PAID_OUT; FAILED, BLOCKED, DENIED, RETURNED → PAYOUT_RETRY.
+- UNCLAIMED (receiver has no PayPal account yet) is returned to us after **30 days**. An UNCLAIMED item can be cancelled (e.g. wrong receiver email), then re-sent.
+
+**Webhooks**
+- Respond with any 2xx quickly (store the event first, process later). Any other response is retried up to **25 times over 3 days**, so duplicates and out-of-order delivery are normal.
+- Verify every event with `POST /v1/notifications/verify-webhook-signature`, sending `auth_algo`, `cert_url`, `transmission_id`, `transmission_sig`, `transmission_time` (from the `PAYPAL-*` request headers), our `webhook_id`, and the raw `webhook_event`. Accept only `verification_status: "SUCCESS"`.
+- Events we use:
+  - Authorizations: `PAYMENT.AUTHORIZATION.CREATED`, `PAYMENT.AUTHORIZATION.VOIDED`
+  - Captures: `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.PENDING`, `PAYMENT.CAPTURE.DECLINED`, `PAYMENT.CAPTURE.REFUNDED`, `PAYMENT.CAPTURE.REVERSED`
+  - Orders: `CHECKOUT.ORDER.APPROVED`
+  - Payout items: `PAYMENT.PAYOUTS-ITEM.SUCCEEDED`, `.FAILED`, `.BLOCKED`, `.HELD`, `.UNCLAIMED`, `.RETURNED`, `.REFUNDED`, `.CANCELED`
+  - Disputes: `CUSTOMER.DISPUTE.CREATED`, `CUSTOMER.DISPUTE.UPDATED`, `CUSTOMER.DISPUTE.RESOLVED`
 
 ## Order state machine
 States: CREATED, BLOCKED, AUTHORIZED, VOIDED, IN_DISPUTE, REFUNDED, PARTIAL_REFUND, RELEASED, ESCALATED, CAPTURED, PAYOUT_PENDING, PAID_OUT, PAYOUT_RETRY

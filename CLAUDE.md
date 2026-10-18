@@ -92,6 +92,7 @@ QR holds a signed token (HMAC/JWT) bound to order ID, seller ID, single-use nonc
 
 ## Tables
 users, listings, orders, ledger_entries, webhook_events, outbox, decisions, qr_tokens, chat_messages, disputes. Use JSONB for risk reasons, AI inputs/outputs, PayPal payloads.
+- **Every table has row level security enabled, with no policies.** Supabase exposes the `public` schema through its Data API (anon key); RLS with no policies blocks it, while Prisma (the table owner) is unaffected. Any migration that creates a table must also run `ALTER TABLE "<name>" ENABLE ROW LEVEL SECURITY;`. Check Supabase's Security Advisor after schema changes.
 
 ## Phases
 0. Setup (Oct 7–11): repo, schema, PayPal sandbox, deploy skeleton

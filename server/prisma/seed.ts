@@ -3,6 +3,10 @@
 
 import { prisma } from "../src/db.js";
 import type { ListingCategory } from "../src/generated/prisma/client.js";
+import { hashPassword } from "../src/auth/password.js";
+
+// Dev-only login for every seed user. Never use seed accounts with real money.
+const SEED_PASSWORD = "password123";
 
 const SCHOOL_DOMAIN = "mcmaster.ca";
 
@@ -58,9 +62,10 @@ const listings: SeedListing[] = [
 
 async function main() {
   const now = new Date();
+  const passwordHash = await hashPassword(SEED_PASSWORD);
 
   for (const u of users) {
-    const data = { email: u.email, displayName: u.displayName, emailVerifiedAt: now };
+    const data = { email: u.email, displayName: u.displayName, emailVerifiedAt: now, passwordHash };
     await prisma.user.upsert({ where: { id: u.id }, create: { id: u.id, ...data }, update: data });
   }
 
@@ -79,6 +84,7 @@ async function main() {
   }
 
   console.log(`Seeded ${users.length} users and ${listings.length} listings.`);
+  console.log(`Seed users log in with password "${SEED_PASSWORD}".`);
 }
 
 main()

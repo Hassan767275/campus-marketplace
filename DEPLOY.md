@@ -39,6 +39,13 @@ The build installs all workspaces (which also builds `shared/`), then runs `pris
 | `PAYPAL_CLIENT_SECRET` | Sandbox app secret | Yes |
 | `PAYPAL_BASE_URL` | `https://api-m.sandbox.paypal.com` | No |
 | `CORS_ORIGINS` | The Vercel URL, e.g. `https://campus-marketplace.vercel.app` (comma-separate several; no trailing slash) | No |
+| `JWT_SECRET` | Long random string, at least 32 characters. Generate a new one for production; don't reuse your local one | Yes |
+| `ALLOWED_EMAIL_DOMAINS` | School domains allowed to sign up, e.g. `mcmaster.ca` (comma-separated; subdomains allowed) | No |
+| `API_PUBLIC_URL` | This API's own URL, e.g. `https://campus-marketplace-api.onrender.com`. Used in email verification links | No |
+
+The API refuses to start if `JWT_SECRET` or `ALLOWED_EMAIL_DOMAINS` is missing; the deploy log will say which.
+
+There's no email provider yet, so email verification links are printed in the API's logs (`[email] Verify ...`). Open the link from there.
 
 Don't set `PORT`: Render sets it. Node 24 is pinned in `.nvmrc` and `engines`; if the build log shows another version, add `NODE_VERSION=24`.
 

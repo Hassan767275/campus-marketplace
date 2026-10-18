@@ -1,4 +1,5 @@
 import express, { type ErrorRequestHandler, type RequestHandler } from "express";
+import { authRouter } from "./routes/auth.js";
 import { listingsRouter } from "./routes/listings.js";
 
 // Origins allowed to call the API from a browser, e.g. the Vercel URL.
@@ -22,6 +23,12 @@ function cors(allowed: string[]): RequestHandler {
 }
 
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  // Client errors raised by Express itself, e.g. malformed JSON (400) or a body that's too large (413).
+  const status = typeof err?.status === "number" ? err.status : 500;
+  if (status >= 400 && status < 500) {
+    res.status(status).json({ error: status === 400 ? "Malformed request body" : "Bad request" });
+    return;
+  }
   console.error(err);
   // Never send internal error details (SQL, stack traces) to the client.
   res.status(500).json({ error: "Internal server error" });
@@ -43,6 +50,7 @@ export function createApp() {
     res.json({ ok: true });
   });
 
+  app.use("/api/auth", authRouter);
   app.use("/api/listings", listingsRouter);
 
   app.use((_req, res) => {

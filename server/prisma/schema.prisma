@@ -105,6 +105,7 @@ model User {
   email           String    @unique // school email only, enforced in app
   displayName     String    @map("display_name")
   emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(3)
+  passwordHash    String?   @map("password_hash") // scrypt; null = cannot log in
   paypalEmail     String?   @map("paypal_email") // payout receiver
   isAdmin         Boolean   @default(false) @map("is_admin")
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)

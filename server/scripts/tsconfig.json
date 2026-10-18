@@ -1,6 +1,4 @@
 {
-  // Type-checking settings for one-off scripts (VS Code and `tsc -p scripts`).
-  // Not part of the server build, which only compiles src/.
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "rootDir": "..",

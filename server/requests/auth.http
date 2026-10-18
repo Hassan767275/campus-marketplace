@@ -1,0 +1,86 @@
+# Auth API requests for the VS Code "REST Client" extension (humao.rest-client).
+# Start the API first: npm run dev -w server
+# Then click "Send Request" above any request.
+
+@api = http://localhost:4000/api
+@email = test.student@mcmaster.ca
+@password = longenough1
+
+### Health check
+GET {{api}}/health
+
+### 1. Sign up -> 201. The verify link is printed in the server terminal ([email] Verify ...)
+POST {{api}}/auth/signup
+Content-Type: application/json
+
+{ "email": "{{email}}", "password": "{{password}}", "displayName": "Test Student" }
+
+### 2. Log in before verifying -> 403 EMAIL_NOT_VERIFIED
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{email}}", "password": "{{password}}" }
+
+### 3. Verify: paste the token from the link in the server terminal after token=
+GET {{api}}/auth/verify-email?token_here
+
+### 4. Log in -> 200 with a token
+# @name login
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{email}}", "password": "{{password}}" }
+
+### 5. Who am I -> 200 (uses the token from request 4 automatically)
+GET {{api}}/auth/me
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Seed user login (password123) -> 200
+# @name seedLogin
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "seed.alex.chen@mcmaster.ca", "password": "password123" }
+
+### Who am I as the seed user -> 200
+GET {{api}}/auth/me
+Authorization: Bearer {{seedLogin.response.body.$.token}}
+
+### ---------- Things that should fail ----------
+
+### Non-school email -> 400
+POST {{api}}/auth/signup
+Content-Type: application/json
+
+{ "email": "someone@gmail.com", "password": "{{password}}", "displayName": "Nope" }
+
+### Short password -> 400
+POST {{api}}/auth/signup
+Content-Type: application/json
+
+{ "email": "short.pw@mcmaster.ca", "password": "short", "displayName": "Nope" }
+
+### Same email twice -> 409 (run after request 1)
+POST {{api}}/auth/signup
+Content-Type: application/json
+
+{ "email": "{{email}}", "password": "{{password}}", "displayName": "Duplicate" }
+
+### Wrong password -> 401
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{email}}", "password": "wrongpassword" }
+
+### No token -> 401
+GET {{api}}/auth/me
+
+### Bad token -> 401
+GET {{api}}/auth/me
+Authorization: Bearer not-a-real-token
+
+### Resend verification (same answer whether or not the account exists) -> 200
+POST {{api}}/auth/resend-verification
+Content-Type: application/json
+
+{ "email": "{{email}}" }

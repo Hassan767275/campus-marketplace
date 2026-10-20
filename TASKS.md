@@ -55,7 +55,7 @@ Goal: a student can sign up, post an item, browse, and message a seller. No mone
 - [x] **1.3 Chat API**
   > Read CLAUDE.md. Build the chat API: messages between buyer and seller per listing, stored in chat_messages, with an endpoint to send and an endpoint to fetch messages (polling is fine). Only the two participants can read a thread. When done, tick task 1.3 in TASKS.md.
 
-- [ ] **1.4 API tests**
+- [x] **1.4 API tests**
   > Read CLAUDE.md. Write API tests for auth and listings: sign up with a non-school email fails, login works, unauthenticated requests are rejected, filters work, and a non-owner can't edit a listing. When done, tick task 1.4 in TASKS.md.
 
 - [ ] **1.5 Shared layout and design**

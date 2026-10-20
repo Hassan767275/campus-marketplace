@@ -25,19 +25,19 @@ Goal: both of you can run the app locally, it deploys, and it talks to the DB an
 
 - [x] **0.4 Ledger DB safety** (included in the 0.3 init migration: sum-to-zero + append-only triggers. Tests in server/test/ledger.test.ts pass.)
 
-- [ ] **0.5 Seed script**
+- [x] **0.5 Seed script**
   > Read CLAUDE.md. Write a Prisma seed script in server/: 5 test users with school email addresses and 20 listings spread across several categories with realistic prices in integer cents. Make it safe to re-run. When done, tick task 0.5 in TASKS.md.
 
-- [ ] **0.6 State enum + legal transitions**
+- [x] **0.6 State enum + legal transitions**
   > Read CLAUDE.md. In the shared types package, write the order state enum and a legal-transitions table as code, exactly matching the state machine in CLAUDE.md. Add a helper isLegalTransition(from, to). No database logic yet. When done, tick task 0.6 in TASKS.md.
 
-- [ ] **0.7 PayPal sandbox keys + token test** (create sandbox buyer/seller accounts and a REST app on developer.paypal.com manually first, put keys in server/.env)
+- [x] **0.7 PayPal sandbox keys + token test** (create sandbox buyer/seller accounts and a REST app on developer.paypal.com manually first, put keys in server/.env)
   > Read CLAUDE.md. Add PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET and PAYPAL_BASE_URL (sandbox) to server/.env.example. Write a small script in server/ that gets a PayPal sandbox OAuth access token using those env vars and prints success or the error. Never log the secret. When done, tick task 0.7 in TASKS.md.
 
-- [ ] **0.8 Deploy skeleton**
+- [x] **0.8 Deploy skeleton**
   > Read CLAUDE.md. Add a GET /health endpoint and a GET /listings endpoint (returns seeded listings from Postgres) to the API. Prepare the API for deployment on Render or Railway and the web app for Vercel: build scripts, start scripts, and a short DEPLOY.md listing the env vars each host needs. Don't deploy for me. When done, tick task 0.8 in TASKS.md.
 
-- [ ] **0.9 Branch rules** (manual): feature branches, PRs reviewed by the other person, main always deploys. Read PayPal docs on Orders v2 (authorize intent), Payouts, webhooks, and note the authorization honor and expiry windows in CLAUDE.md.
+- [x] **0.9 Branch rules** (manual): feature branches, PRs reviewed by the other person, main always deploys. Read PayPal docs on Orders v2 (authorize intent), Payouts, webhooks, and note the authorization honor and expiry windows in CLAUDE.md.
 
 **Done when:** the deployed API returns seeded listings from Postgres, and the token script gets a PayPal sandbox access token.
 
@@ -46,7 +46,7 @@ Goal: both of you can run the app locally, it deploys, and it talks to the DB an
 ## Phase 1 — Core marketplace (Oct 12–18)
 Goal: a student can sign up, post an item, browse, and message a seller. No money yet.
 
-- [ ] **1.1 Auth API**
+- [x] **1.1 Auth API**
   > Read CLAUDE.md. Build the auth API: sign up restricted to school email domains (configurable list in env), email verification (a fake link logged to the console is fine in dev), login with JWT or sessions, and auth middleware for protected routes. When done, tick task 1.1 in TASKS.md.
 
 - [ ] **1.2 Listings API**

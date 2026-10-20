@@ -52,7 +52,7 @@ Goal: a student can sign up, post an item, browse, and message a seller. No mone
 - [x] **1.2 Listings API**
   > Read CLAUDE.md. Build the listings API: create, edit, mark sold, list with filters (category, price range), and get one. Only the seller can edit or mark sold. Add photo upload to Supabase Storage. When done, tick task 1.2 in TASKS.md.
 
-- [ ] **1.3 Chat API**
+- [x] **1.3 Chat API**
   > Read CLAUDE.md. Build the chat API: messages between buyer and seller per listing, stored in chat_messages, with an endpoint to send and an endpoint to fetch messages (polling is fine). Only the two participants can read a thread. When done, tick task 1.3 in TASKS.md.
 
 - [ ] **1.4 API tests**

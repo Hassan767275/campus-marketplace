@@ -1,5 +1,6 @@
 import express, { type ErrorRequestHandler, type RequestHandler } from "express";
 import { authRouter } from "./routes/auth.js";
+import { chatRouter } from "./routes/chat.js";
 import { listingsRouter } from "./routes/listings.js";
 
 // Origins allowed to call the API from a browser, e.g. the Vercel URL.
@@ -53,6 +54,7 @@ export function createApp() {
 
   app.use("/api/auth", authRouter);
   app.use("/api/listings", listingsRouter);
+  app.use("/api/chats", chatRouter);
 
   app.use((_req, res) => {
     res.status(404).json({ error: "Not found" });

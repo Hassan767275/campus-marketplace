@@ -4,6 +4,7 @@ import { isListingCategory, LISTING_LIMITS, type ListingCategory } from "@campus
 import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../db.js";
 import { requireAuth } from "../auth/middleware.js";
+import { isUuid } from "../ids.js";
 import { deleteObject, getStorageConfig, pathFromPublicUrl, uploadObject } from "../storage.js";
 
 export const listingsRouter = Router();
@@ -23,13 +24,8 @@ const publicListing = {
   seller: { select: { id: true, displayName: true } },
 } as const;
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DEFAULT_PAGE = 24;
 const MAX_PAGE = 50;
-
-function isUuid(value: unknown): value is string {
-  return typeof value === "string" && UUID_RE.test(value);
-}
 
 function getPublicListing(id: string) {
   return prisma.listing.findUnique({ where: { id }, select: publicListing });

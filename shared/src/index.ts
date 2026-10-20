@@ -6,3 +6,4 @@ export type Cents = number;
 
 export * from "./orderState.js";
 export * from "./listings.js";
+export * from "./chat.js";

@@ -1,0 +1,87 @@
+# Chat API requests for the VS Code "REST Client" extension (humao.rest-client).
+# Start the API first: npm run dev -w server
+# Run the logins and "Pick a listing" first; later requests use their results.
+
+@api = http://localhost:4000/api
+
+### Log in as the seller (Alex)
+# @name seller
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "seed.alex.chen@mcmaster.ca", "password": "password123" }
+
+### Log in as a buyer (Priya)
+# @name buyer
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "seed.priya.patel@mcmaster.ca", "password": "password123" }
+
+### Log in as an outsider (Jordan)
+# @name outsider
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "seed.jordan.smith@mcmaster.ca", "password": "password123" }
+
+### Create a listing as the seller to chat about
+# @name listing
+POST {{api}}/listings
+Authorization: Bearer {{seller.response.body.$.token}}
+Content-Type: application/json
+
+{ "title": "Road bike", "description": "Size M, new tires.", "category": "SPORTS", "priceCents": 9000 }
+
+### ---------- Conversation ----------
+
+### Buyer starts the conversation -> 201
+# @name firstMessage
+POST {{api}}/chats/{{listing.response.body.$.listing.id}}/messages
+Authorization: Bearer {{buyer.response.body.$.token}}
+Content-Type: application/json
+
+{ "body": "Is it still available?" }
+
+### Seller replies (must say which buyer) -> 201
+POST {{api}}/chats/{{listing.response.body.$.listing.id}}/messages
+Authorization: Bearer {{seller.response.body.$.token}}
+Content-Type: application/json
+
+{ "body": "Yes! Meet at the library at 3?", "buyerId": "{{buyer.response.body.$.user.id}}" }
+
+### Buyer reads the thread (latest 100, oldest first)
+GET {{api}}/chats/{{listing.response.body.$.listing.id}}/messages
+Authorization: Bearer {{buyer.response.body.$.token}}
+
+### Seller reads the thread with that buyer
+GET {{api}}/chats/{{listing.response.body.$.listing.id}}/messages?buyerId={{buyer.response.body.$.user.id}}
+Authorization: Bearer {{seller.response.body.$.token}}
+
+### Poll: only messages newer than the first one
+GET {{api}}/chats/{{listing.response.body.$.listing.id}}/messages?after={{firstMessage.response.body.$.message.id}}
+Authorization: Bearer {{buyer.response.body.$.token}}
+
+### Seller's inbox: one entry per (listing, buyer), newest first
+GET {{api}}/chats
+Authorization: Bearer {{seller.response.body.$.token}}
+
+### ---------- Things that should fail ----------
+
+### Outsider reads the buyer's thread -> 403
+GET {{api}}/chats/{{listing.response.body.$.listing.id}}/messages?buyerId={{buyer.response.body.$.user.id}}
+Authorization: Bearer {{outsider.response.body.$.token}}
+
+### Seller messages someone who never wrote -> 404
+POST {{api}}/chats/{{listing.response.body.$.listing.id}}/messages
+Authorization: Bearer {{seller.response.body.$.token}}
+Content-Type: application/json
+
+{ "body": "Want to buy my bike?", "buyerId": "{{outsider.response.body.$.user.id}}" }
+
+### Seller without buyerId -> 400
+GET {{api}}/chats/{{listing.response.body.$.listing.id}}/messages
+Authorization: Bearer {{seller.response.body.$.token}}
+
+### Not logged in -> 401
+GET {{api}}/chats

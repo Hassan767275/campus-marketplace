@@ -49,7 +49,7 @@ Goal: a student can sign up, post an item, browse, and message a seller. No mone
 - [x] **1.1 Auth API**
   > Read CLAUDE.md. Build the auth API: sign up restricted to school email domains (configurable list in env), email verification (a fake link logged to the console is fine in dev), login with JWT or sessions, and auth middleware for protected routes. When done, tick task 1.1 in TASKS.md.
 
-- [ ] **1.2 Listings API**
+- [x] **1.2 Listings API**
   > Read CLAUDE.md. Build the listings API: create, edit, mark sold, list with filters (category, price range), and get one. Only the seller can edit or mark sold. Add photo upload to Supabase Storage. When done, tick task 1.2 in TASKS.md.
 
 - [ ] **1.3 Chat API**

@@ -1,0 +1,112 @@
+# Listings API requests for the VS Code "REST Client" extension (humao.rest-client).
+# Start the API first: npm run dev -w server
+# Run the two logins first; later requests use their tokens.
+
+@api = http://localhost:4000/api
+
+### Log in as seed seller (Alex)
+# @name seller
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "seed.alex.chen@mcmaster.ca", "password": "password123" }
+
+### Log in as another seed user (not the seller)
+# @name other
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "seed.priya.patel@mcmaster.ca", "password": "password123" }
+
+### ---------- Browse ----------
+
+### All active listings (newest first, 24 per page)
+GET {{api}}/listings
+
+### Filter: category + price range in cents ($10 to $100)
+GET {{api}}/listings?category=TEXTBOOKS&minPriceCents=1000&maxPriceCents=10000
+
+### Several categories, 5 per page
+# @name page1
+GET {{api}}/listings?category=ELECTRONICS,FURNITURE&limit=5
+
+### Next page (uses nextCursor from the request above)
+GET {{api}}/listings?category=ELECTRONICS,FURNITURE&limit=5&cursor={{page1.response.body.$.nextCursor}}
+
+### ---------- Create, edit, photos, sold ----------
+
+### Create -> 201
+# @name created
+POST {{api}}/listings
+Authorization: Bearer {{seller.response.body.$.token}}
+Content-Type: application/json
+
+{ "title": "Desk lamp", "description": "LED, three brightness levels.", "category": "FURNITURE", "priceCents": 1500 }
+
+### Get one -> 200
+GET {{api}}/listings/{{created.response.body.$.listing.id}}
+
+### Edit (seller) -> 200
+PATCH {{api}}/listings/{{created.response.body.$.listing.id}}
+Authorization: Bearer {{seller.response.body.$.token}}
+Content-Type: application/json
+
+{ "priceCents": 1200, "description": "LED, three brightness levels. Bulb included." }
+
+### Upload a photo (seller) -> 201. Put any JPEG next to this file as photo.jpg.
+# Needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in server/.env and the bucket from: npm run storage:setup -w server
+POST {{api}}/listings/{{created.response.body.$.listing.id}}/photos
+Authorization: Bearer {{seller.response.body.$.token}}
+Content-Type: image/jpeg
+
+< ./photo.jpg
+
+### Delete a photo: replace PHOTO with the last part of a photoUrls entry, e.g. 3f2c...e1.jpg
+DELETE {{api}}/listings/{{created.response.body.$.listing.id}}/photos/PHOTO
+Authorization: Bearer {{seller.response.body.$.token}}
+
+### Mark sold (seller) -> 200. Repeating it also returns 200.
+POST {{api}}/listings/{{created.response.body.$.listing.id}}/sold
+Authorization: Bearer {{seller.response.body.$.token}}
+
+### ---------- Things that should fail ----------
+
+### Edit by someone else -> 403
+PATCH {{api}}/listings/{{created.response.body.$.listing.id}}
+Authorization: Bearer {{other.response.body.$.token}}
+Content-Type: application/json
+
+{ "priceCents": 1 }
+
+### Mark sold by someone else -> 403
+POST {{api}}/listings/{{created.response.body.$.listing.id}}/sold
+Authorization: Bearer {{other.response.body.$.token}}
+
+### Edit after it's sold -> 409
+PATCH {{api}}/listings/{{created.response.body.$.listing.id}}
+Authorization: Bearer {{seller.response.body.$.token}}
+Content-Type: application/json
+
+{ "title": "Too late" }
+
+### Create without logging in -> 401
+POST {{api}}/listings
+Content-Type: application/json
+
+{ "title": "x", "description": "x", "category": "OTHER", "priceCents": 500 }
+
+### Price as dollars instead of integer cents -> 400
+POST {{api}}/listings
+Authorization: Bearer {{seller.response.body.$.token}}
+Content-Type: application/json
+
+{ "title": "Chair", "description": "Wooden chair", "category": "FURNITURE", "priceCents": 12.5 }
+
+### Unknown category -> 400
+GET {{api}}/listings?category=CARS
+
+### min above max -> 400
+GET {{api}}/listings?minPriceCents=5000&maxPriceCents=1000
+
+### Not a real listing -> 404
+GET {{api}}/listings/00000000-0000-0000-0000-000000000000

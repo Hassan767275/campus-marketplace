@@ -42,6 +42,11 @@ The build installs all workspaces (which also builds `shared/`), then runs `pris
 | `JWT_SECRET` | Long random string, at least 32 characters. Generate a new one for production; don't reuse your local one | Yes |
 | `ALLOWED_EMAIL_DOMAINS` | School domains allowed to sign up, e.g. `mcmaster.ca` (comma-separated; subdomains allowed) | No |
 | `API_PUBLIC_URL` | This API's own URL, e.g. `https://campus-marketplace-api.onrender.com`. Used in email verification links | No |
+| `SUPABASE_URL` | Supabase project URL, e.g. `https://abcd.supabase.co` (Project Settings → API) | No |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase secret / service_role key. Server only; it bypasses all access rules | Yes |
+| `SUPABASE_STORAGE_BUCKET` | `listing-photos` (optional; that's the default) | No |
+
+Without the two Supabase variables the API still runs, but photo uploads answer 503.
 
 The API refuses to start if `JWT_SECRET` or `ALLOWED_EMAIL_DOMAINS` is missing; the deploy log will say which.
 
@@ -89,6 +94,18 @@ npm run migrate:deploy -w server
 ```
 
 Do this before merging a PR that adds a migration, then tell your teammate to pull and run `npx prisma generate`.
+
+---
+
+## Photo storage
+
+Listing photos live in a public Supabase Storage bucket. Anyone can view a photo by its URL; only the API (with the service role key) can upload or delete. Create the bucket once per Supabase project, from your machine, after adding the Supabase variables to `server/.env`:
+
+```bash
+npm run storage:setup -w server
+```
+
+It's safe to re-run. Don't add Storage policies for the anon role: uploads must go through the API, which checks the user is the listing's seller and that the file really is an image.
 
 ---
 

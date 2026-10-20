@@ -26,7 +26,8 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   // Client errors raised by Express itself, e.g. malformed JSON (400) or a body that's too large (413).
   const status = typeof err?.status === "number" ? err.status : 500;
   if (status >= 400 && status < 500) {
-    res.status(status).json({ error: status === 400 ? "Malformed request body" : "Bad request" });
+    const message = status === 400 ? "Malformed request body" : status === 413 ? "Request body is too large" : "Bad request";
+    res.status(status).json({ error: message });
     return;
   }
   console.error(err);

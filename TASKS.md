@@ -58,7 +58,7 @@ Goal: a student can sign up, post an item, browse, and message a seller. No mone
 - [x] **1.4 API tests**
   > Read CLAUDE.md. Write API tests for auth and listings: sign up with a non-school email fails, login works, unauthenticated requests are rejected, filters work, and a non-owner can't edit a listing. When done, tick task 1.4 in TASKS.md.
 
-- [ ] **1.5 Shared layout and design**
+- [x] **1.5 Shared layout and design**
   > Read CLAUDE.md. In client/, set up a shared layout (header, nav, page container), a small set of reusable components (button, input, card), and routing, so later pages look consistent. When done, tick task 1.5 in TASKS.md.
 
 - [ ] **1.6 Auth UI**

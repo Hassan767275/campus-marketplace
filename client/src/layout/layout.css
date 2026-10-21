@@ -1,0 +1,107 @@
+.app {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-header__inner {
+  max-width: var(--container-width);
+  min-height: var(--header-height);
+  margin: 0 auto;
+  padding: var(--space-2) var(--space-4);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+}
+
+.app-header__brand {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.app-nav {
+  display: flex;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.app-nav__link {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.app-nav__link:hover {
+  color: var(--color-text);
+}
+
+.app-nav__link--active {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.app-header__auth {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* On small screens the nav drops to its own row under brand + auth. */
+@media (max-width: 640px) {
+  .app-header__brand {
+    flex: 1;
+  }
+
+  .app-nav {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+
+.app-main {
+  flex: 1;
+}
+
+.page {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.page--narrow {
+  max-width: 480px;
+}
+
+.page__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.page__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.page__actions {
+  display: flex;
+  gap: var(--space-2);
+}

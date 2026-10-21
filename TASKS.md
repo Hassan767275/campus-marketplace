@@ -64,7 +64,7 @@ Goal: a student can sign up, post an item, browse, and message a seller. No mone
 - [x] **1.6 Auth UI**
   > Read CLAUDE.md. Build the sign up and login pages in client/ against the auth API, and add protected routes that redirect to login. When done, tick task 1.6 in TASKS.md.
 
-- [ ] **1.7 Browse, listing detail, post listing**
+- [x] **1.7 Browse, listing detail, post listing**
   > Read CLAUDE.md. Build in client/: a browse grid with category and price filters, a listing detail page, and a post-a-listing form with photo upload. When done, tick task 1.7 in TASKS.md.
 
 - [ ] **1.8 Chat panel + My listings / My orders**

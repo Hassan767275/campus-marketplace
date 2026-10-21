@@ -25,15 +25,18 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
+  /** Sent as JSON, except a Blob/File, which is sent as raw bytes with its own type (e.g. photo uploads). */
   body?: unknown
   signal?: AbortSignal
 }
 
-/** JSON request to the API. Sends the session token if there is one. Throws ApiError on non-2xx. */
+/** Request to the API. Sends the session token if there is one. Throws ApiError on non-2xx. */
 export async function api<T>(path: string, { method = 'GET', body, signal }: RequestOptions = {}): Promise<T> {
   const token = getToken()
   const headers: Record<string, string> = {}
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const isBlob = body instanceof Blob
+  if (isBlob) headers['Content-Type'] = body.type || 'application/octet-stream'
+  else if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (token) headers.Authorization = `Bearer ${token}`
 
   let res: Response
@@ -41,7 +44,7 @@ export async function api<T>(path: string, { method = 'GET', body, signal }: Req
     res = await fetch(`${API_URL}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: isBlob ? body : body === undefined ? undefined : JSON.stringify(body),
       signal,
     })
   } catch (err) {

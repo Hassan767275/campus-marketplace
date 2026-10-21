@@ -7,7 +7,7 @@ import { BrowsePage } from './pages/listings/BrowsePage'
 import { ListingDetailPage } from './pages/listings/ListingDetailPage'
 import { SellPage } from './pages/listings/SellPage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import { MyStuffPage } from './pages/placeholders'
+import { MyStuffPage } from './pages/me/MyStuffPage'
 
 // Every page renders inside AppLayout. Add new routes as children here:
 // public pages at the top level, logged-in-only pages under RequireAuth.

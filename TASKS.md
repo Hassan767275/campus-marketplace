@@ -67,7 +67,7 @@ Goal: a student can sign up, post an item, browse, and message a seller. No mone
 - [x] **1.7 Browse, listing detail, post listing**
   > Read CLAUDE.md. Build in client/: a browse grid with category and price filters, a listing detail page, and a post-a-listing form with photo upload. When done, tick task 1.7 in TASKS.md.
 
-- [ ] **1.8 Chat panel + My listings / My orders**
+- [x] **1.8 Chat panel + My listings / My orders**
   > Read CLAUDE.md. Add a chat panel on the listing detail page (polling the chat API) and a "My listings / My orders" page (orders list empty for now). When done, tick task 1.8 in TASKS.md.
 
 **Done when:** on the deployed app, user A posts an item with a photo, user B finds it with a filter, and they exchange chat messages.

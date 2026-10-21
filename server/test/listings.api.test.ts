@@ -106,6 +106,24 @@ describe("GET /api/listings filters", () => {
   });
 });
 
+describe("GET /api/listings/mine", () => {
+  it("requires login", async () => {
+    expect((await api.call("GET", "/listings/mine")).status).toBe(401);
+  });
+
+  it("returns the seller's own listings, including sold ones", async () => {
+    const res = await api.call("GET", "/listings/mine", { token: sellerToken });
+    expect(res.status).toBe(200);
+    expect(res.body.listings.map((l: { id: string }) => l.id).sort()).toEqual(Object.values(ids).sort());
+  });
+
+  it("doesn't return anyone else's listings", async () => {
+    const res = await api.call("GET", "/listings/mine", { token: otherToken });
+    expect(res.status).toBe(200);
+    expect(res.body.listings).toEqual([]);
+  });
+});
+
 describe("only the seller can change a listing", () => {
   it("rejects an edit by another user and leaves the listing unchanged", async () => {
     const res = await api.call("PATCH", `/listings/${ids.lamp}`, { token: otherToken, json: { priceCents: 100, title: "hijacked" } });

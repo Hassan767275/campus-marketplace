@@ -26,6 +26,7 @@ const publicListing = {
 
 const DEFAULT_PAGE = 24;
 const MAX_PAGE = 50;
+const MY_LISTINGS_MAX = 200;
 
 function getPublicListing(id: string) {
   return prisma.listing.findUnique({ where: { id }, select: publicListing });
@@ -161,6 +162,18 @@ listingsRouter.get("/", async (req, res) => {
   const listings = rows.slice(0, limit);
   const nextCursor = rows.length > limit ? listings[listings.length - 1].id : null;
   res.json({ listings, nextCursor });
+});
+
+// GET /api/listings/mine  (protected) — the logged-in user's listings in every
+// status except REMOVED, newest first. Registered before /:id so "mine" isn't read as an id.
+listingsRouter.get("/mine", requireAuth, async (req, res) => {
+  const listings = await prisma.listing.findMany({
+    where: { sellerId: req.user!.id, status: { not: "REMOVED" } },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: MY_LISTINGS_MAX,
+    select: publicListing,
+  });
+  res.json({ listings });
 });
 
 // GET /api/listings/:id — one listing. Sold listings stay viewable; removed ones don't.

@@ -1,0 +1,78 @@
+.my-listings {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-listings li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.my-listing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.my-listing:hover .my-listing__title {
+  color: var(--color-primary);
+}
+
+.my-listing__photo {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+}
+
+.my-listing__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.my-listing__info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.my-listing__title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-listing__meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.my-listing__status {
+  flex: none;
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+}
+
+.my-listing__status--active {
+  color: var(--color-success);
+  background: #ecfdf3;
+}
+
+.my-listing__status--reserved,
+.my-listing__status--sold,
+.my-listing__status--removed {
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}

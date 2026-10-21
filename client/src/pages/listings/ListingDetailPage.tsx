@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
+import { ChatPanel } from '../../chat/ChatPanel'
 import { Alert, ButtonLink, Card } from '../../components'
 import { Page } from '../../layout/Page'
 import { CATEGORY_LABELS, formatPrice } from '../../listings/format'
@@ -110,42 +111,45 @@ function ListingDetail({ listing, notice }: { listing: Listing; notice: ListingD
           )}
         </div>
 
-        <Card className="listing-detail__info">
-          <div className="stack">
-            <div className="listing-detail__price-row">
-              <span className="listing-detail__price">{formatPrice(listing.priceCents, listing.currency)}</span>
-              {listing.status !== 'ACTIVE' && (
-                <span className="status-badge">{listing.status === 'SOLD' ? 'Sold' : 'Reserved'}</span>
+        <div className="listing-detail__side">
+          <Card className="listing-detail__info">
+            <div className="stack">
+              <div className="listing-detail__price-row">
+                <span className="listing-detail__price">{formatPrice(listing.priceCents, listing.currency)}</span>
+                {listing.status !== 'ACTIVE' && (
+                  <span className="status-badge">{listing.status === 'SOLD' ? 'Sold' : 'Reserved'}</span>
+                )}
+              </div>
+              <dl className="listing-detail__facts">
+                <div>
+                  <dt>Category</dt>
+                  <dd>
+                    <Link to={`/?category=${listing.category}`}>{CATEGORY_LABELS[listing.category]}</Link>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Seller</dt>
+                  <dd>{isSeller ? `${listing.seller.displayName} (you)` : listing.seller.displayName}</dd>
+                </div>
+                <div>
+                  <dt>Posted</dt>
+                  <dd>{posted}</dd>
+                </div>
+              </dl>
+              <div>
+                <h2 className="listing-detail__heading">Description</h2>
+                {/* Seller-written text: rendered as plain text, never as HTML. */}
+                <p className="listing-detail__description">{listing.description}</p>
+              </div>
+              {!isSeller && auth.status === 'anonymous' && listing.status === 'ACTIVE' && (
+                <ButtonLink to="/login" state={{ from: `/listings/${listing.id}` }} variant="secondary" fullWidth>
+                  Log in to contact the seller
+                </ButtonLink>
               )}
             </div>
-            <dl className="listing-detail__facts">
-              <div>
-                <dt>Category</dt>
-                <dd>
-                  <Link to={`/?category=${listing.category}`}>{CATEGORY_LABELS[listing.category]}</Link>
-                </dd>
-              </div>
-              <div>
-                <dt>Seller</dt>
-                <dd>{isSeller ? `${listing.seller.displayName} (you)` : listing.seller.displayName}</dd>
-              </div>
-              <div>
-                <dt>Posted</dt>
-                <dd>{posted}</dd>
-              </div>
-            </dl>
-            <div>
-              <h2 className="listing-detail__heading">Description</h2>
-              {/* Seller-written text: rendered as plain text, never as HTML. */}
-              <p className="listing-detail__description">{listing.description}</p>
-            </div>
-            {!isSeller && auth.status === 'anonymous' && listing.status === 'ACTIVE' && (
-              <ButtonLink to="/login" state={{ from: `/listings/${listing.id}` }} variant="secondary" fullWidth>
-                Log in to contact the seller
-              </ButtonLink>
-            )}
-          </div>
-        </Card>
+          </Card>
+          {auth.status === 'authenticated' && <ChatPanel listing={listing} meId={auth.user.id} />}
+        </div>
       </div>
     </Page>
   )

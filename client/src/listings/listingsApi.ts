@@ -43,6 +43,11 @@ export function fetchListing(id: string, signal?: AbortSignal) {
   return api<{ listing: Listing }>(`/api/listings/${encodeURIComponent(id)}`, { signal })
 }
 
+/** The logged-in user's own listings in every status except removed, newest first. */
+export function fetchMyListings(signal?: AbortSignal) {
+  return api<{ listings: Listing[] }>('/api/listings/mine', { signal })
+}
+
 export function createListing(input: ListingInput) {
   return api<{ listing: Listing }>('/api/listings', { method: 'POST', body: input })
 }

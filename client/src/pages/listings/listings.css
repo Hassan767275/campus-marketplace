@@ -186,6 +186,13 @@
   }
 }
 
+.listing-detail__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
 .listing-detail__gallery {
   display: flex;
   flex-direction: column;

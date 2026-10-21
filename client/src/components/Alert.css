@@ -1,0 +1,27 @@
+.alert {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 0.925rem;
+}
+
+.alert--info {
+  background: var(--color-primary-soft);
+  border-color: #d6d2fb;
+  color: #2f2a8f;
+}
+
+.alert--success {
+  background: #ecfdf3;
+  border-color: #bbf0cf;
+  color: var(--color-success);
+}
+
+.alert--error {
+  background: #fef2f2;
+  border-color: #fbd0d0;
+  color: var(--color-danger-hover);
+}

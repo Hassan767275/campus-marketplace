@@ -1,5 +1,6 @@
-import { Link, NavLink, Outlet } from 'react-router'
-import { ButtonLink } from '../components'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router'
+import { useAuth } from '../auth/useAuth'
+import { Button, ButtonLink } from '../components'
 import './layout.css'
 
 const navItems = [
@@ -15,6 +16,9 @@ export function AppLayout() {
       <header className="app-header">
         <div className="app-header__inner">
           <Link to="/" className="app-header__brand">
+            <span className="app-header__logo" aria-hidden="true">
+              CM
+            </span>
             Campus Marketplace
           </Link>
           <nav className="app-nav" aria-label="Main">
@@ -29,20 +33,50 @@ export function AppLayout() {
               </NavLink>
             ))}
           </nav>
-          {/* Auth-aware state (current user, log out) comes with task 1.6. */}
-          <div className="app-header__auth">
-            <ButtonLink to="/login" variant="ghost" size="sm">
-              Log in
-            </ButtonLink>
-            <ButtonLink to="/signup" size="sm">
-              Sign up
-            </ButtonLink>
-          </div>
+          <HeaderAuth />
         </div>
       </header>
       <main className="app-main">
         <Outlet />
       </main>
+    </div>
+  )
+}
+
+function HeaderAuth() {
+  const auth = useAuth()
+  const navigate = useNavigate()
+
+  if (auth.status === 'loading') return <div className="app-header__auth" />
+
+  if (auth.status === 'authenticated') {
+    return (
+      <div className="app-header__auth">
+        <span className="app-header__user" title={auth.user.email}>
+          Hi, {auth.user.displayName}
+        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            auth.logout()
+            navigate('/')
+          }}
+        >
+          Log out
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="app-header__auth">
+      <ButtonLink to="/login" variant="ghost" size="sm">
+        Log in
+      </ButtonLink>
+      <ButtonLink to="/signup" size="sm">
+        Sign up
+      </ButtonLink>
     </div>
   )
 }

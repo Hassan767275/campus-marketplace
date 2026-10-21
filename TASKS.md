@@ -61,7 +61,7 @@ Goal: a student can sign up, post an item, browse, and message a seller. No mone
 - [x] **1.5 Shared layout and design**
   > Read CLAUDE.md. In client/, set up a shared layout (header, nav, page container), a small set of reusable components (button, input, card), and routing, so later pages look consistent. When done, tick task 1.5 in TASKS.md.
 
-- [ ] **1.6 Auth UI**
+- [x] **1.6 Auth UI**
   > Read CLAUDE.md. Build the sign up and login pages in client/ against the auth API, and add protected routes that redirect to login. When done, tick task 1.6 in TASKS.md.
 
 - [ ] **1.7 Browse, listing detail, post listing**

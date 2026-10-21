@@ -58,25 +58,3 @@ export function MyStuffPage() {
     </Page>
   )
 }
-
-export function LoginPage() {
-  // Task 1.6
-  return (
-    <Page title="Log in" width="narrow">
-      <Card>
-        <p className="text-muted">Login form goes here.</p>
-      </Card>
-    </Page>
-  )
-}
-
-export function SignupPage() {
-  // Task 1.6
-  return (
-    <Page title="Sign up" width="narrow" description="Use your school email address.">
-      <Card>
-        <p className="text-muted">Sign up form goes here.</p>
-      </Card>
-    </Page>
-  )
-}

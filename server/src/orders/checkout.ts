@@ -30,7 +30,8 @@ export class CheckoutError extends Error {
 /** Thrown inside the DB transaction when someone else reserved the listing first. */
 class ListingUnavailableError extends Error {}
 
-const orderView = {
+/** The order fields the API returns to the client (also used by the QR handoff). */
+export const orderView = {
   id: true,
   listingId: true,
   state: true,
@@ -40,9 +41,11 @@ const orderView = {
   paypalOrderId: true,
   authorizedAt: true,
   handoffDeadline: true,
+  capturedAt: true,
 } as const;
 
-function paypalFailure(err: unknown): never {
+/** Turns a PayPalError into a CheckoutError (503 if retryable, else 502); rethrows anything else. */
+export function paypalFailure(err: unknown): never {
   if (!(err instanceof PayPalError)) throw err;
   console.error(`${err.message}${err.debugId ? ` (debug id ${err.debugId})` : ""}`);
   if (err.retryable) {
@@ -222,6 +225,6 @@ export async function authorizeCheckout(paypal: PayPalClient, buyerId: string, o
   return getOrderView(order.id);
 }
 
-async function getOrderView(id: string) {
+export async function getOrderView(id: string) {
   return prisma.order.findUniqueOrThrow({ where: { id }, select: orderView });
 }

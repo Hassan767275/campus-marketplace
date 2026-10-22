@@ -8,6 +8,8 @@ import { ListingDetailPage } from './pages/listings/ListingDetailPage'
 import { SellPage } from './pages/listings/SellPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { MyStuffPage } from './pages/me/MyStuffPage'
+import { HandoffQrPage } from './pages/orders/HandoffQrPage'
+import { ScanPage } from './pages/orders/ScanPage'
 
 // Every page renders inside AppLayout. Add new routes as children here:
 // public pages at the top level, logged-in-only pages under RequireAuth.
@@ -23,6 +25,8 @@ export const router = createBrowserRouter([
         children: [
           { path: '/sell', element: <SellPage /> },
           { path: '/me', element: <MyStuffPage /> },
+          { path: '/orders/:orderId/handoff', element: <HandoffQrPage /> },
+          { path: '/scan', element: <ScanPage /> },
         ],
       },
       {

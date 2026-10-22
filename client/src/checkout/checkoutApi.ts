@@ -12,6 +12,7 @@ export type CheckoutOrder = {
   paypalOrderId: string | null
   authorizedAt: string | null
   handoffDeadline: string | null
+  capturedAt: string | null
 }
 
 /** Creates (or reuses) my order for this listing and its PayPal order. */

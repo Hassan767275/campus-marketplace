@@ -5,6 +5,9 @@
 export const HANDOFF_WINDOW_HOURS = 72;
 export const HANDOFF_WINDOW_MS = HANDOFF_WINDOW_HOURS * 60 * 60 * 1000;
 
+/** A handoff QR code works once, for this long. The seller's page fetches a fresh one before it runs out. */
+export const HANDOFF_TOKEN_TTL_SECONDS = 5 * 60;
+
 /** PayPal authorizations expire 29 days after they're made. */
 export const AUTHORIZATION_VALID_DAYS = 29;
 

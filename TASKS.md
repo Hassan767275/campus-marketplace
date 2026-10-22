@@ -89,7 +89,7 @@ Goal: buyer pays, money is held, QR scan at handoff captures it, and the ledger 
 - [x] **2.4 Checkout flow**
   > Read CLAUDE.md. Build checkout: PayPal Buttons in client/, buyer approves, API authorizes, and in one DB transaction the order moves to AUTHORIZED with a 72-hour deadline and the ledger posts escrow_held / buyer_funds. When done, tick task 2.4 in TASKS.md.
 
-- [ ] **2.5 QR handoff + capture**
+- [x] **2.5 QR handoff + capture** (server/src/orders/handoff.ts, handoff token in server/src/auth/tokens.ts, routes POST /api/orders/:id/handoff-token and /api/orders/handoff/scan; client pages /orders/:orderId/handoff and /scan. Migration 20261022120000_add_qr_scans (qr_scans scan log, RLS on), applied. Tests in server/test/handoff.test.ts. No new env vars; reuses JWT_SECRET. New client deps: qrcode, jsqr.)
   > Read CLAUDE.md. Build the QR handoff: the seller's page shows a signed token (order ID, seller ID, single-use nonce, 5-minute expiry). The buyer scans it on a logged-in scanner page. The server verifies signature, nonce unused, not expired, and buyer is the order's buyer, marks the nonce used, captures through PayPal, and in one DB transaction moves the order to CAPTURED and posts escrow_held / seller_payable / platform_fees. Log every scan. When done, tick task 2.5 in TASKS.md.
 
 - [ ] **2.6 Order status page**

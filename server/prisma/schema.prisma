@@ -98,6 +98,12 @@ enum DisputeStatus {
   ESCALATED
 }
 
+enum QrScanResult {
+  ACCEPTED // token redeemed and the payment captured
+  REJECTED // refused before the token was used (bad signature, expired, replay, wrong buyer, ...)
+  FAILED // token used up, but the capture or its DB write failed
+}
+
 // ---------- Tables ----------
 
 model User {
@@ -118,6 +124,7 @@ model User {
   receivedMessages ChatMessage[] @relation("MessageRecipient")
   qrTokensIssued   QrToken[]     @relation("QrSeller")
   qrTokensRedeemed QrToken[]     @relation("QrRedeemer")
+  qrScans          QrScan[]
   disputesOpened   Dispute[]
   approvals        Decision[]
 
@@ -181,6 +188,7 @@ model Order {
   outbox        OutboxEvent[]
   decisions     Decision[]
   qrTokens      QrToken[]
+  qrScans       QrScan[]
   messages      ChatMessage[]
   dispute       Dispute?
 
@@ -296,12 +304,37 @@ model QrToken {
   scanMeta  Json?     @map("scan_meta") @db.JsonB // ip, user agent, etc.
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  order  Order @relation(fields: [orderId], references: [id])
-  seller User  @relation("QrSeller", fields: [sellerId], references: [id])
-  usedBy User? @relation("QrRedeemer", fields: [usedById], references: [id])
+  order  Order    @relation(fields: [orderId], references: [id])
+  seller User     @relation("QrSeller", fields: [sellerId], references: [id])
+  usedBy User?    @relation("QrRedeemer", fields: [usedById], references: [id])
+  scans  QrScan[]
 
   @@index([orderId])
   @@map("qr_tokens")
+}
+
+// Every handoff scan attempt, accepted or not. Dispute evidence (replays,
+// wrong buyer, expired codes). orderId / qrTokenId are null when the token
+// couldn't be trusted (bad signature, unknown nonce).
+model QrScan {
+  id        String       @id @default(uuid()) @db.Uuid
+  orderId   String?      @map("order_id") @db.Uuid
+  qrTokenId String?      @map("qr_token_id") @db.Uuid
+  scannerId String       @map("scanner_id") @db.Uuid
+  result    QrScanResult
+  reason    String // CAPTURED, ALREADY_USED, EXPIRED, NOT_BUYER, ...
+  ip        String?
+  userAgent String?      @map("user_agent")
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  order   Order?   @relation(fields: [orderId], references: [id])
+  qrToken QrToken? @relation(fields: [qrTokenId], references: [id])
+  scanner User     @relation(fields: [scannerId], references: [id])
+
+  @@index([orderId, createdAt])
+  @@index([qrTokenId])
+  @@index([scannerId])
+  @@map("qr_scans")
 }
 
 // Untrusted input (prompt injection risk) — never let it unlock money.

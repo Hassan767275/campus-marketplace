@@ -2,9 +2,11 @@ import { Router, type Response } from "express";
 import { requireAuth } from "../auth/middleware.js";
 import { authorizeCheckout, CheckoutError, startCheckout } from "../orders/checkout.js";
 import { issueHandoffToken, redeemHandoffToken } from "../orders/handoff.js";
+import { getOrderStatus, listMyOrders } from "../orders/orderStatus.js";
 import type { PayPalClient } from "../paypal/client.js";
 
-// Order endpoints. The PayPal Buttons in the client call POST / from
+// Order endpoints. GET / and GET /:id back "My orders" and the order status
+// page. The PayPal Buttons in the client call POST / from
 // createOrder and POST /:id/authorize from onApprove. The QR handoff uses
 // POST /:id/handoff-token (seller) and POST /handoff/scan (buyer). PayPal
 // itself is only ever called from the server.
@@ -37,6 +39,14 @@ export function createOrdersRouter(getPayPal: () => PayPalClient) {
     }
     await respond(res, () => run(paypal), status);
   }
+
+  // GET /api/orders  — orders I bought or sold (not CREATED), newest first. Returns { orders }.
+  router.get("/", (req, res) => respond(res, async () => ({ orders: await listMyOrders(req.user!.id) })));
+
+  // GET /api/orders/:id  (the order's buyer or seller) — status page data. Returns { order }.
+  router.get("/:id", (req, res) =>
+    respond(res, async () => ({ order: await getOrderStatus(req.user!.id, req.params.id) })),
+  );
 
   // POST /api/orders  { listingId }  (buyer) — starts checkout, returns { orderId, paypalOrderId }.
   router.post("/", (req, res) => handle(res, (paypal) => startCheckout(paypal, req.user!.id, req.body?.listingId), 201));

@@ -107,8 +107,8 @@ export function HandoffQrPage() {
           {state.status === 'closed' && (
             <>
               <Alert>{state.message}</Alert>
-              <ButtonLink to="/me" variant="secondary">
-                Back to my stuff
+              <ButtonLink to={`/orders/${orderId}`} variant="secondary">
+                View order
               </ButtonLink>
             </>
           )}

@@ -6,6 +6,9 @@ import { Alert, ButtonLink, Card } from '../../components'
 import { Page } from '../../layout/Page'
 import { CATEGORY_LABELS, formatPrice } from '../../listings/format'
 import { fetchMyListings, type Listing } from '../../listings/listingsApi'
+import { ORDER_STATE_LABELS, stateTone } from '../../orders/orderStatus'
+import { fetchMyOrders, type OrderStatus } from '../../orders/ordersApi'
+import '../orders/orders.css'
 import './me.css'
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
@@ -21,11 +24,59 @@ export function MyStuffPage() {
   return (
     <Page title="My stuff" actions={<ButtonLink to="/sell">Post a listing</ButtonLink>}>
       <MyListings />
-      <Card title="My orders">
-        {/* Filled in once checkout exists (Phase 2). */}
-        <p className="text-muted">No orders yet. Things you buy or sell will show up here.</p>
-      </Card>
+      <MyOrders />
     </Page>
+  )
+}
+
+type OrdersState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; orders: OrderStatus[] }
+
+function MyOrders() {
+  const [state, setState] = useState<OrdersState>({ status: 'loading' })
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchMyOrders(controller.signal)
+      .then(({ orders }) => setState({ status: 'ready', orders }))
+      .catch((err) => {
+        if (controller.signal.aborted) return
+        setState({ status: 'error', message: err instanceof ApiError ? err.message : 'Could not load your orders.' })
+      })
+    return () => controller.abort()
+  }, [])
+
+  return (
+    <Card title="My orders">
+      {state.status === 'loading' && <p className="text-muted">Loading your orders…</p>}
+      {state.status === 'error' && <Alert tone="error">{state.message}</Alert>}
+      {state.status === 'ready' && state.orders.length === 0 && (
+        <p className="text-muted">No orders yet. Things you buy or sell will show up here.</p>
+      )}
+      {state.status === 'ready' && state.orders.length > 0 && (
+        <ul className="my-listings">
+          {state.orders.map((order) => {
+            const photo = order.listing.photoUrls[0]
+            return (
+              <li key={order.id}>
+                <Link to={`/orders/${order.id}`} className="my-listing">
+                  <span className="my-listing__photo">{photo && <img src={photo} alt="" loading="lazy" />}</span>
+                  <span className="my-listing__info">
+                    <span className="my-listing__title">{order.listing.title}</span>
+                    <span className="my-listing__meta">
+                      {formatPrice(order.amountCents, order.currency)} ·{' '}
+                      {order.role === 'seller' ? `Sold to ${order.buyer.displayName}` : `Bought from ${order.seller.displayName}`}
+                    </span>
+                  </span>
+                  <span className={`order-badge order-badge--${stateTone(order.state)}`}>
+                    {ORDER_STATE_LABELS[order.state]}
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </Card>
   )
 }
 

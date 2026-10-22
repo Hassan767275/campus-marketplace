@@ -1,0 +1,131 @@
+.order-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.order-status__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.order-status__item:hover .order-status__title {
+  color: var(--color-primary);
+}
+
+.order-status__photo {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+}
+
+.order-status__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.order-status__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
+.order-status__title {
+  font-size: 1rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-status__state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.order-status__explain,
+.order-status__chat {
+  margin: 0;
+}
+
+.order-status__chat {
+  font-size: 0.9rem;
+}
+
+/* State badge, shared with the "My orders" list. */
+.order-badge {
+  flex: none;
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+}
+
+.order-badge--waiting {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.order-badge--done {
+  color: var(--color-success);
+  background: #ecfdf3;
+}
+
+.order-badge--problem {
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.order-handoff {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.order-handoff__countdown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.order-handoff__time {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-handoff__hint {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.order-money {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-money dd {
+  margin: 0;
+  text-align: right;
+}
+
+.order-money dt:last-of-type,
+.order-money dd:last-of-type {
+  font-weight: 700;
+}

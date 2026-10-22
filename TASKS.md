@@ -92,7 +92,7 @@ Goal: buyer pays, money is held, QR scan at handoff captures it, and the ledger 
 - [x] **2.5 QR handoff + capture** (server/src/orders/handoff.ts, handoff token in server/src/auth/tokens.ts, routes POST /api/orders/:id/handoff-token and /api/orders/handoff/scan; client pages /orders/:orderId/handoff and /scan. Migration 20261022120000_add_qr_scans (qr_scans scan log, RLS on), applied. Tests in server/test/handoff.test.ts. No new env vars; reuses JWT_SECRET. New client deps: qrcode, jsqr.)
   > Read CLAUDE.md. Build the QR handoff: the seller's page shows a signed token (order ID, seller ID, single-use nonce, 5-minute expiry). The buyer scans it on a logged-in scanner page. The server verifies signature, nonce unused, not expired, and buyer is the order's buyer, marks the nonce used, captures through PayPal, and in one DB transaction moves the order to CAPTURED and posts escrow_held / seller_payable / platform_fees. Log every scan. When done, tick task 2.5 in TASKS.md.
 
-- [ ] **2.6 Order status page**
+- [x] **2.6 Order status page** (client page /orders/:orderId in client/src/pages/orders/OrderStatusPage.tsx, state labels in client/src/orders/; server GET /api/orders and GET /api/orders/:id in server/src/orders/orderStatus.ts, tests in server/test/orderStatus.test.ts. "My orders" on /me now lists orders. No migration, no new env vars.)
   > Read CLAUDE.md. Build an order status page in client/ for buyer and seller showing current state, the handoff deadline countdown, and the right action (show QR for seller, scan for buyer). When done, tick task 2.6 in TASKS.md.
 
 - [ ] **2.7 Unit tests**

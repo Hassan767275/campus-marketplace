@@ -9,6 +9,7 @@ import { SellPage } from './pages/listings/SellPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { MyStuffPage } from './pages/me/MyStuffPage'
 import { HandoffQrPage } from './pages/orders/HandoffQrPage'
+import { OrderStatusPage } from './pages/orders/OrderStatusPage'
 import { ScanPage } from './pages/orders/ScanPage'
 
 // Every page renders inside AppLayout. Add new routes as children here:
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/sell', element: <SellPage /> },
           { path: '/me', element: <MyStuffPage /> },
+          { path: '/orders/:orderId', element: <OrderStatusPage /> },
           { path: '/orders/:orderId/handoff', element: <HandoffQrPage /> },
           { path: '/scan', element: <ScanPage /> },
         ],

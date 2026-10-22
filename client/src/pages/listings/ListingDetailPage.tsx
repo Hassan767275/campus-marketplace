@@ -93,7 +93,7 @@ function ListingDetail({ listing: loaded, notice }: { listing: Listing; notice: 
           Payment authorized. Your money is held until you scan the seller's QR code at the handoff. Meet the seller by{' '}
           {new Date(order.handoffDeadline).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}, or
           the hold is cancelled and you won't be charged.{' '}
-          <Link to="/scan">Open the scanner</Link> when you meet.
+          <Link to={`/orders/${order.id}`}>Track your order</Link> and scan the code there when you meet.
         </Alert>
       )}
 

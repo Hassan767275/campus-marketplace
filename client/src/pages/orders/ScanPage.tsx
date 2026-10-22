@@ -50,7 +50,7 @@ export function ScanPage() {
               <Alert tone="success">
                 Payment complete: {formatPrice(state.order.amountCents, state.order.currency)} released to the seller. Enjoy!
               </Alert>
-              <ButtonLink to="/me">Go to my stuff</ButtonLink>
+              <ButtonLink to={`/orders/${state.order.id}`}>View order</ButtonLink>
             </>
           )}
           {state.status === 'error' && (

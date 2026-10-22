@@ -73,7 +73,7 @@ export async function login(api: Api, email: string): Promise<string> {
   return res.body.token;
 }
 
-/** Deletes this file's test users (and stale ones) with the listings and messages that reference them. */
+/** Deletes this file's test users (and stale ones) with the orders, listings and messages that reference them. */
 export async function cleanup() {
   const users = await prisma.user.findMany({
     where: {
@@ -90,6 +90,9 @@ export async function cleanup() {
     await prisma.$transaction([
       prisma.chatMessage.deleteMany({
         where: { OR: [{ senderId: { in: ids } }, { recipientId: { in: ids } }, { listing: listings }] },
+      }),
+      prisma.order.deleteMany({
+        where: { OR: [{ buyerId: { in: ids } }, { sellerId: { in: ids } }, { listing: listings }] },
       }),
       prisma.listing.deleteMany({ where: listings }),
       prisma.user.deleteMany({ where: { id: { in: ids } } }),

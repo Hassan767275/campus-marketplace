@@ -77,7 +77,7 @@ Goal: a student can sign up, post an item, browse, and message a seller. No mone
 ## Phase 2 — Payments core (Oct 19–25)
 Goal: buyer pays, money is held, QR scan at handoff captures it, and the ledger shows every movement.
 
-- [ ] **2.1 Order state machine service**
+- [x] **2.1 Order state machine service** (server/src/orders/stateMachine.ts; tests in server/test/orderStateMachine.test.ts. No migration, no new env vars.)
   > Read CLAUDE.md. Build the order state machine service with one transition(orderId, from, to, expectedVersion) function that uses the legal-transitions table, rejects illegal moves, and uses optimistic concurrency (zero rows updated means a stale version, which is rejected). It must accept a Prisma transaction client so callers can combine it with other writes. When done, tick task 2.1 in TASKS.md.
 
 - [ ] **2.2 Double-entry ledger**

@@ -80,7 +80,7 @@ Goal: buyer pays, money is held, QR scan at handoff captures it, and the ledger 
 - [x] **2.1 Order state machine service** (server/src/orders/stateMachine.ts; tests in server/test/orderStateMachine.test.ts. No migration, no new env vars.)
   > Read CLAUDE.md. Build the order state machine service with one transition(orderId, from, to, expectedVersion) function that uses the legal-transitions table, rejects illegal moves, and uses optimistic concurrency (zero rows updated means a stale version, which is rejected). It must accept a Prisma transaction client so callers can combine it with other writes. When done, tick task 2.1 in TASKS.md.
 
-- [ ] **2.2 Double-entry ledger**
+- [x] **2.2 Double-entry ledger** (server/src/ledger/postTransaction.ts; tests in server/test/postTransaction.test.ts. Db client type moved to server/src/db.ts. No migration, no new env vars.)
   > Read CLAUDE.md. Build postTransaction(entries[]) for the double-entry ledger: integer cents only, refuses any transaction that doesn't sum to zero, append-only, and accepts a Prisma transaction client. When done, tick task 2.2 in TASKS.md.
 
 - [ ] **2.3 PayPal client (server only)**

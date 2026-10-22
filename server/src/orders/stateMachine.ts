@@ -1,13 +1,11 @@
 import { isLegalTransition, type OrderState } from "@campus/shared";
-import type { Prisma, PrismaClient } from "../generated/prisma/client.js";
+import type { Db } from "../db.js";
+import type { Prisma } from "../generated/prisma/client.js";
 import { isUuid } from "../ids.js";
 
 // The only way an order's state changes (see CLAUDE.md "Order state machine").
 // Callers pass a Prisma transaction client so the state change commits or
 // rolls back together with their ledger entries and outbox row.
-
-/** The root client or an interactive-transaction client. */
-export type Db = PrismaClient | Prisma.TransactionClient;
 
 export type TransitionResult = { orderId: string; state: OrderState; version: number };
 

@@ -3,6 +3,8 @@ import { Link, useLocation, useParams } from 'react-router'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/useAuth'
 import { ChatPanel } from '../../chat/ChatPanel'
+import type { CheckoutOrder } from '../../checkout/checkoutApi'
+import { PayPalCheckout } from '../../checkout/PayPalCheckout'
 import { Alert, ButtonLink, Card } from '../../components'
 import { Page } from '../../layout/Page'
 import { CATEGORY_LABELS, formatPrice } from '../../listings/format'
@@ -58,8 +60,11 @@ export function ListingDetailPage() {
   return <ListingDetail key={state.listing.id} listing={state.listing} notice={notice} />
 }
 
-function ListingDetail({ listing, notice }: { listing: Listing; notice: ListingDetailState | null }) {
+function ListingDetail({ listing: loaded, notice }: { listing: Listing; notice: ListingDetailState | null }) {
   const auth = useAuth()
+  // Set once this buyer's payment is authorized; the listing is then reserved for them.
+  const [order, setOrder] = useState<CheckoutOrder | null>(null)
+  const listing: Listing = order ? { ...loaded, status: 'RESERVED' } : loaded
   const isSeller = auth.status === 'authenticated' && auth.user.id === listing.seller.id
   const photos = listing.photoUrls ?? []
   const [photoIndex, setPhotoIndex] = useState(0)
@@ -83,6 +88,13 @@ function ListingDetail({ listing, notice }: { listing: Listing; notice: ListingD
           </ul>
         </Alert>
       ) : null}
+      {order?.handoffDeadline && (
+        <Alert tone="success">
+          Payment authorized. Your money is held until you scan the seller's QR code at the handoff. Meet the seller by{' '}
+          {new Date(order.handoffDeadline).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}, or
+          the hold is cancelled and you won't be charged.
+        </Alert>
+      )}
 
       <div className="listing-detail">
         <div className="listing-detail__gallery">
@@ -148,6 +160,9 @@ function ListingDetail({ listing, notice }: { listing: Listing; notice: ListingD
               )}
             </div>
           </Card>
+          {auth.status === 'authenticated' && !isSeller && listing.status === 'ACTIVE' && (
+            <PayPalCheckout listing={listing} onAuthorized={setOrder} />
+          )}
           {auth.status === 'authenticated' && <ChatPanel listing={listing} meId={auth.user.id} />}
         </div>
       </div>

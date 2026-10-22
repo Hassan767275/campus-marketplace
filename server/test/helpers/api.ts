@@ -27,9 +27,10 @@ export type Api = {
   close: () => Promise<void>;
 };
 
-export async function startApi(): Promise<Api> {
+/** Pass `paypal` to replace the real PayPal client with a fake. */
+export async function startApi(options: Parameters<typeof createApp>[0] = {}): Promise<Api> {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set");
-  const server = createApp().listen(0, "127.0.0.1");
+  const server = createApp(options).listen(0, "127.0.0.1");
   await once(server, "listening");
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api`;
 

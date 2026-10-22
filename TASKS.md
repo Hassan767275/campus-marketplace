@@ -86,7 +86,7 @@ Goal: buyer pays, money is held, QR scan at handoff captures it, and the ledger 
 - [x] **2.3 PayPal client (server only)** (server/src/paypal/client.ts; mocked-fetch tests in server/test/paypalClient.test.ts. Uses existing PAYPAL_* env vars; no migration.)
   > Read CLAUDE.md. Build a server-only PayPal client in server/ with: create order (intent AUTHORIZE), authorize, capture, and void. Every call sends a PayPal-Request-Id built from order ID + action. Handle errors and timeouts clearly. When done, tick task 2.3 in TASKS.md.
 
-- [ ] **2.4 Checkout flow**
+- [x] **2.4 Checkout flow**
   > Read CLAUDE.md. Build checkout: PayPal Buttons in client/, buyer approves, API authorizes, and in one DB transaction the order moves to AUTHORIZED with a 72-hour deadline and the ledger posts escrow_held / buyer_funds. When done, tick task 2.4 in TASKS.md.
 
 - [ ] **2.5 QR handoff + capture**

@@ -1,0 +1,9 @@
+.checkout__explain {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* PayPal renders its buttons in an iframe; keep them from stretching too wide. */
+.checkout__buttons {
+  max-width: 420px;
+}

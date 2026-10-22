@@ -1,7 +1,9 @@
 import express, { type ErrorRequestHandler, type RequestHandler } from "express";
+import { getPayPalClient, type PayPalClient } from "./paypal/client.js";
 import { authRouter } from "./routes/auth.js";
 import { chatRouter } from "./routes/chat.js";
 import { listingsRouter } from "./routes/listings.js";
+import { createOrdersRouter } from "./routes/orders.js";
 
 // Origins allowed to call the API from a browser, e.g. the Vercel URL.
 // Comma-separated in CORS_ORIGINS. Empty in local dev, where Vite proxies /api.
@@ -36,7 +38,8 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   res.status(500).json({ error: "Internal server error" });
 };
 
-export function createApp() {
+/** Tests pass a fake PayPal client; the real one is built from env on first use. */
+export function createApp({ paypal = getPayPalClient }: { paypal?: () => PayPalClient } = {}) {
   const app = express();
 
   const allowedOrigins = (process.env.CORS_ORIGINS ?? "")
@@ -55,6 +58,7 @@ export function createApp() {
   app.use("/api/auth", authRouter);
   app.use("/api/listings", listingsRouter);
   app.use("/api/chats", chatRouter);
+  app.use("/api/orders", createOrdersRouter(paypal));
 
   app.use((_req, res) => {
     res.status(404).json({ error: "Not found" });

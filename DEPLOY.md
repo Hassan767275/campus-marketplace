@@ -46,7 +46,7 @@ The build installs all workspaces (which also builds `shared/`), then runs `pris
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase secret / service_role key. Server only; it bypasses all access rules | Yes |
 | `SUPABASE_STORAGE_BUCKET` | `listing-photos` (optional; that's the default) | No |
 
-Without the two Supabase variables the API still runs, but photo uploads answer 503.
+Without the two Supabase variables the API still runs, but photo uploads answer 503. Likewise, without all three `PAYPAL_*` variables checkout answers 503.
 
 The API refuses to start if `JWT_SECRET` or `ALLOWED_EMAIL_DOMAINS` is missing; the deploy log will say which.
 
@@ -80,6 +80,7 @@ Install command, build command, output folder and SPA routing come from `client/
 | Variable | Value |
 |---|---|
 | `VITE_API_URL` | The API URL from Render/Railway, no trailing slash |
+| `VITE_PAYPAL_CLIENT_ID` | The same sandbox client ID as the API's `PAYPAL_CLIENT_ID` (the client ID is public; never the secret). Without it the PayPal buttons don't show |
 
 `VITE_` variables are baked into the JavaScript at build time and are visible to anyone. Never put a secret in one. After changing it, redeploy.
 

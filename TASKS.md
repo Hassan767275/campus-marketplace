@@ -95,7 +95,7 @@ Goal: buyer pays, money is held, QR scan at handoff captures it, and the ledger 
 - [x] **2.6 Order status page** (client page /orders/:orderId in client/src/pages/orders/OrderStatusPage.tsx, state labels in client/src/orders/; server GET /api/orders and GET /api/orders/:id in server/src/orders/orderStatus.ts, tests in server/test/orderStatus.test.ts. "My orders" on /me now lists orders. No migration, no new env vars.)
   > Read CLAUDE.md. Build an order status page in client/ for buyer and seller showing current state, the handoff deadline countdown, and the right action (show QR for seller, scan for buyer). When done, tick task 2.6 in TASKS.md.
 
-- [ ] **2.7 Unit tests**
+- [x] **2.7 Unit tests** (server/test/paymentsInvariants.test.ts, alongside the existing orderState / orderStateMachine / postTransaction / ledger tests. No migration, no new env vars.)
   > Read CLAUDE.md. Write unit tests: every illegal transition is rejected, two concurrent updates with the same version result in exactly one winner, every ledger transaction sums to zero, and an unbalanced transaction is refused. When done, tick task 2.7 in TASKS.md.
 
 - [ ] **2.8 End-to-end sandbox run** (manual, together): full purchase in sandbox, then try a replayed QR token and a double-clicked capture.

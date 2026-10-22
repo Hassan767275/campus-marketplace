@@ -41,6 +41,8 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
 /** Tests pass a fake PayPal client; the real one is built from env on first use. */
 export function createApp({ paypal = getPayPalClient }: { paypal?: () => PayPalClient } = {}) {
   const app = express();
+  // Render puts one proxy in front of us; trust it so req.ip is the real client IP (scan logs).
+  app.set("trust proxy", 1);
 
   const allowedOrigins = (process.env.CORS_ORIGINS ?? "")
     .split(",")

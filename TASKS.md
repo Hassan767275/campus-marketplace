@@ -83,7 +83,7 @@ Goal: buyer pays, money is held, QR scan at handoff captures it, and the ledger 
 - [x] **2.2 Double-entry ledger** (server/src/ledger/postTransaction.ts; tests in server/test/postTransaction.test.ts. Db client type moved to server/src/db.ts. No migration, no new env vars.)
   > Read CLAUDE.md. Build postTransaction(entries[]) for the double-entry ledger: integer cents only, refuses any transaction that doesn't sum to zero, append-only, and accepts a Prisma transaction client. When done, tick task 2.2 in TASKS.md.
 
-- [ ] **2.3 PayPal client (server only)**
+- [x] **2.3 PayPal client (server only)** (server/src/paypal/client.ts; mocked-fetch tests in server/test/paypalClient.test.ts. Uses existing PAYPAL_* env vars; no migration.)
   > Read CLAUDE.md. Build a server-only PayPal client in server/ with: create order (intent AUTHORIZE), authorize, capture, and void. Every call sends a PayPal-Request-Id built from order ID + action. Handle errors and timeouts clearly. When done, tick task 2.3 in TASKS.md.
 
 - [ ] **2.4 Checkout flow**

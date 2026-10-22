@@ -98,7 +98,7 @@ Goal: buyer pays, money is held, QR scan at handoff captures it, and the ledger 
 - [x] **2.7 Unit tests** (server/test/paymentsInvariants.test.ts, alongside the existing orderState / orderStateMachine / postTransaction / ledger tests. No migration, no new env vars.)
   > Read CLAUDE.md. Write unit tests: every illegal transition is rejected, two concurrent updates with the same version result in exactly one winner, every ledger transaction sums to zero, and an unbalanced transaction is refused. When done, tick task 2.7 in TASKS.md.
 
-- [ ] **2.8 End-to-end sandbox run** (manual, together): full purchase in sandbox, then try a replayed QR token and a double-clicked capture.
+- [x] **2.8 End-to-end sandbox run** (manual, together): full purchase in sandbox, then try a replayed QR token and a double-clicked capture.
 
 **Done when:** a sandbox purchase goes CREATED → AUTHORIZED → CAPTURED via QR scan, the ledger balances, a replayed QR fails, and a retried capture does not double-charge.
 
